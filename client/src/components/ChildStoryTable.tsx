@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ChildUserStory, SortField, SortDirection } from '../types/ado.js';
-import { getStatusBadgeClass, formatDate, truncate } from '../utils/formatters.js';
+import { getStatusBadgeClass, formatDate } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
 
@@ -356,8 +356,8 @@ export function ChildStoryTable({
                     {story.id}
                   </a>
                 </td>
-                <td className="max-w-xs truncate" title={story.title}>
-                  {truncate(story.title, 60)}
+                <td className="max-w-md whitespace-normal break-words" title={story.title}>
+                  {story.title}
                 </td>
                 <td>
                   <span className={getStatusBadgeClass(story.status)}>

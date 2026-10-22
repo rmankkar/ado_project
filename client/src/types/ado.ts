@@ -102,11 +102,11 @@ export interface TestCase {
   complexity: string | null;
   tags: string | null;
   createdBy: string | null;
-  parentUserStory: {
+  parentUserStories: {
     id: number;
     title: string;
     url: string;
-  } | null;
+  }[];
   url: string;
 }
 

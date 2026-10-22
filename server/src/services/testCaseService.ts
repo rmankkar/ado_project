@@ -31,7 +31,6 @@ function buildTestCasesQuery(iterationPath: string): string {
       AND [Source].[System.WorkItemType] = '${WORK_ITEM_TYPE_USER_STORY}'
       AND [System.Links.LinkType] = '${TESTED_BY_LINK_TYPE}'
       AND [Target].[System.WorkItemType] = '${WORK_ITEM_TYPE_TEST_CASE}'
-      AND [Target].[System.State] NOT IN ('Closed', 'Removed')
     ORDER BY [Target].[System.Id]
   `;
 }
@@ -115,29 +114,48 @@ export async function fetchTestCases(iterationPath: string): Promise<FetchTestCa
     const wiqlResult = await adoClient.runWiql(query);
     console.log('[DEBUG] Test Case WIQL Result workItemRelations count:', wiqlResult.workItemRelations.length);
 
-    // Extract unique test case work item IDs from the target work items in relations
-    const testCaseIds = [...new Set(wiqlResult.workItemRelations.map(r => r.target.id))];
-    console.log('[DEBUG] Test Case IDs from WIQL:', testCaseIds);
-
-    if (testCaseIds.length === 0) {
+    if (wiqlResult.workItemRelations.length === 0) {
       return { testCases: [], errors: [] };
     }
+
+    // Build a map of Test Case ID -> array of Parent User Story IDs from the relations
+    const testCaseToParentIds = new Map<number, number[]>();
+    const testCaseIdsSet = new Set<number>();
+    const parentIdsSet = new Set<number>();
+
+    for (const relation of wiqlResult.workItemRelations) {
+      // Skip relations with missing source or target
+      if (!relation.source || !relation.target) {
+        console.log('[DEBUG] Skipping relation with missing source or target:', relation);
+        continue;
+      }
+      const testCaseId = relation.target.id;
+      const parentUserStoryId = relation.source.id;
+
+      if (!testCaseId || !parentUserStoryId) {
+        console.log('[DEBUG] Skipping relation with missing IDs:', relation);
+        continue;
+      }
+
+      testCaseIdsSet.add(testCaseId);
+      parentIdsSet.add(parentUserStoryId);
+
+      if (!testCaseToParentIds.has(testCaseId)) {
+        testCaseToParentIds.set(testCaseId, []);
+      }
+      testCaseToParentIds.get(testCaseId)!.push(parentUserStoryId);
+    }
+
+    const testCaseIds = [...testCaseIdsSet];
+    const parentIds = [...parentIdsSet];
+
+    console.log('[DEBUG] Test Case IDs from WIQL:', testCaseIds);
+    console.log('[DEBUG] Parent User Story IDs from WIQL relations:', parentIds);
+    console.log('[DEBUG] Test Case to Parent mapping:', Object.fromEntries(testCaseToParentIds));
 
     // Fetch full work item details for test cases
     const testCaseItemsMap = await fetchWorkItemsByIds(testCaseIds);
     console.log('[DEBUG] Test Case items fetched:', testCaseItemsMap.size);
-
-    // Collect parent User Story IDs from the test cases (System.Parent field)
-    const parentIds: number[] = [];
-    for (const testCaseItem of testCaseItemsMap.values()) {
-      const parent = testCaseItem.fields['System.Parent'] as number | undefined;
-      console.log('[DEBUG] Test Case', testCaseItem.id, 'System.Parent:', parent);
-      if (parent) {
-        console.log('[DEBUG] Adding parent User Story ID:', parent);
-        parentIds.push(parent);
-      }
-    }
-    console.log('[DEBUG] Collected parent User Story IDs:', parentIds);
 
     // Fetch parent User Story titles in batch
     const parentTitleMap = await fetchParentUserStories(parentIds);
@@ -156,16 +174,20 @@ export async function fetchTestCases(iterationPath: string): Promise<FetchTestCa
         continue;
       }
 
-      // Get parent User Story if available
-      const parent = testCaseItem.fields['System.Parent'] as number | undefined;
-      const parentInfo = parent
-        ? { id: parent, title: parentTitleMap.get(parent) ?? `User Story ${parent}` }
-        : null;
+      // Get parent User Stories from the TestedBy relations (not System.Parent)
+      const parentIdsForTestCase = testCaseToParentIds.get(testCaseItem.id) ?? [];
+      const parentInfos = parentIdsForTestCase
+        .map(parentId => ({
+          id: parentId,
+          title: parentTitleMap.get(parentId) ?? `User Story ${parentId}`,
+          url: '' // Will be filled in mapWorkItemToTestCase
+        }))
+        .filter(p => p.title && p.id);
 
       const testCase = mapWorkItemToTestCase(
         testCaseItem,
         process.env.ADO_ORG_URL ?? '',
-        parentInfo
+        parentInfos
       );
       testCases.push(testCase);
     }

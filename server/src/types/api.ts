@@ -126,11 +126,11 @@ export interface TestCase {
   complexity: string | null;
   tags: string | null;
   createdBy: string | null;
-  parentUserStory: {
+  parentUserStories: {
     id: number;
     title: string;
     url: string;
-  } | null;
+  }[];
   url: string;
 }
 
@@ -241,7 +241,7 @@ function mapComplexityValue(rawValue: string | undefined): string | null {
 export function mapWorkItemToTestCase(
   item: AdoWorkItem,
   orgUrl: string,
-  parentUserStory: { id: number; title: string } | null,
+  parentUserStories: { id: number; title: string }[],
 ): TestCase {
   const fields = item.fields as AdoWorkItemFields;
   const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
@@ -251,13 +251,11 @@ export function mapWorkItemToTestCase(
   const complexityRawValue = fields['Custom.Complexity'] as string | undefined;
   const tagsValue = fields['System.Tags'] as string | undefined;
 
-  // Construct parent User Story URL if parent exists
-  const parentUserStoryWithUrl = parentUserStory
-    ? {
-        ...parentUserStory,
-        url: `${orgUrl}/${project}/_workitems/edit/${parentUserStory.id}`,
-      }
-    : null;
+  // Construct parent User Story URLs
+  const parentUserStoriesWithUrl = parentUserStories.map(parent => ({
+    ...parent,
+    url: `${orgUrl}/${project}/_workitems/edit/${parent.id}`,
+  }));
 
   return {
     id: item.id,
@@ -267,7 +265,7 @@ export function mapWorkItemToTestCase(
     complexity: mapComplexityValue(complexityRawValue),
     tags: tagsValue ?? null,
     createdBy: createdBy?.displayName ?? null,
-    parentUserStory: parentUserStoryWithUrl,
+    parentUserStories: parentUserStoriesWithUrl,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

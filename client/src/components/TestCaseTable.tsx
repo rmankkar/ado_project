@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { TestCase, SortField, SortDirection } from '../types/ado.js';
 import { getStatusBadgeClass } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
@@ -115,8 +115,10 @@ export function TestCaseTable({
           bVal = (b.createdBy ?? '').toLowerCase();
           break;
         case 'parentUserStory':
-          aVal = `${a.parentUserStory?.id ?? 0} ${a.parentUserStory?.title ?? ''}`.toLowerCase();
-          bVal = `${b.parentUserStory?.id ?? 0} ${b.parentUserStory?.title ?? ''}`.toLowerCase();
+          const aParent = a.parentUserStories?.[0];
+          const bParent = b.parentUserStories?.[0];
+          aVal = `${aParent?.id ?? 0} ${aParent?.title ?? ''}`.toLowerCase();
+          bVal = `${bParent?.id ?? 0} ${bParent?.title ?? ''}`.toLowerCase();
           break;
         default:
           return 0;
@@ -327,7 +329,7 @@ export function TestCaseTable({
               </tr>
             ) : (
               filteredAndSortedTestCases.map(testCase => (
-              <tr key={`${testCase.id}-${testCase.parentUserStory?.id ?? 'none'}`}>
+              <tr key={`${testCase.id}-${testCase.parentUserStories?.[0]?.id ?? 'none'}`}>
                 <td className="font-mono font-medium">
                   <a
                     href={testCase.url}
@@ -359,16 +361,23 @@ export function TestCaseTable({
                   {testCase.createdBy ?? '—'}
                 </td>
                 <td className="font-mono text-sm text-neutral-600">
-                  {testCase.parentUserStory ? (
-                    <a
-                      href={testCase.parentUserStory.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
-                      title={testCase.parentUserStory.title}
-                    >
-                      {testCase.parentUserStory.id}
-                    </a>
+                  {testCase.parentUserStories && testCase.parentUserStories.length > 0 ? (
+                    <span title={testCase.parentUserStories.map(p => p.title).join(', ')}>
+                      {testCase.parentUserStories.map((parent, index) => (
+                        <React.Fragment key={parent.id}>
+                          <a
+                            href={parent.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+                            title={parent.title}
+                          >
+                            {parent.id}
+                          </a>
+                          {index < testCase.parentUserStories.length - 1 && <span className="text-neutral-400 mx-1">,</span>}
+                        </React.Fragment>
+                      ))}
+                    </span>
                   ) : (
                     <span>—</span>
                   )}

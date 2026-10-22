@@ -55,12 +55,14 @@ export function TestCaseReviewTab() {
     return s !== 'closed' && s !== 'removed';
   }).length;
 
-  // Compute unique User Story count (test cases with parentUserStory)
+  // Compute unique User Story count (test cases with parentUserStories)
   const uniqueUserStoryCount = useMemo(() => {
     const userStoryIds = new Set<number>();
     for (const tc of testCases) {
-      if (tc.parentUserStory?.id) {
-        userStoryIds.add(tc.parentUserStory.id);
+      if (tc.parentUserStories && tc.parentUserStories.length > 0) {
+        for (const parent of tc.parentUserStories) {
+          userStoryIds.add(parent.id);
+        }
       }
     }
     return userStoryIds.size;
