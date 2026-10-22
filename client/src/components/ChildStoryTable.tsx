@@ -1,0 +1,397 @@
+import { useMemo, useState } from 'react';
+import type { ChildUserStory, SortField, SortDirection } from '../types/ado.js';
+import { getStatusBadgeClass, formatDate, truncate } from '../utils/formatters.js';
+import { LoadingSpinner } from './LoadingSpinner.js';
+import { InfoAlert } from './ErrorAlert.js';
+
+interface ChildStoryTableProps {
+  childStories: ChildUserStory[];
+  isLoading: boolean;
+  isFetching: boolean;
+  onFetch: () => void;
+  selectedFeatureIds: Set<number>;
+  onSort: (field: SortField) => void;
+  sortState: { field: SortField; direction: SortDirection };
+}
+
+interface FilterState {
+  status: string;
+  assignedTo: string;
+  boardColumn: string;
+  hideRemoved: boolean;
+}
+
+export function ChildStoryTable({
+  childStories,
+  isLoading,
+  isFetching,
+  onFetch,
+  selectedFeatureIds,
+  onSort,
+  sortState,
+}: ChildStoryTableProps) {
+  const hasSelectedFeatures = selectedFeatureIds.size > 0;
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    status: '',
+    assignedTo: '',
+    boardColumn: '',
+    hideRemoved: true,
+  });
+
+  const handleFetch = () => {
+    setHasAttemptedFetch(true);
+    onFetch();
+  };
+
+  // Get unique values for filter dropdowns
+  const uniqueStatuses = useMemo(() =>
+    [...new Set(childStories.map(s => s.status).filter(Boolean))].sort(),
+    [childStories]
+  );
+  const uniqueAssignees = useMemo(() =>
+    [...new Set(childStories.map(s => s.assignedTo).filter(Boolean))].sort(),
+    [childStories]
+  );
+  const uniqueBoardColumns = useMemo(() =>
+    [...new Set(childStories.map(s => s.boardColumn).filter(Boolean))].sort(),
+    [childStories]
+  );
+
+  // Apply filters and sorting
+  const filteredAndSortedStories = useMemo(() => {
+    let result = [...childStories];
+
+    // Filter out "Removed" status if enabled
+    if (filters.hideRemoved) {
+      result = result.filter(s => s.status.toLowerCase() !== 'removed');
+    }
+
+    // Apply text filters
+    if (filters.status) {
+      result = result.filter(s => s.status === filters.status);
+    }
+    if (filters.assignedTo) {
+      result = result.filter(s => s.assignedTo === filters.assignedTo);
+    }
+    if (filters.boardColumn) {
+      result = result.filter(s => s.boardColumn === filters.boardColumn);
+    }
+
+    // Apply sorting
+    const { field, direction } = sortState;
+    result.sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+
+      switch (field) {
+        case 'id':
+          aVal = a.id;
+          bVal = b.id;
+          break;
+        case 'title':
+          aVal = a.title.toLowerCase();
+          bVal = b.title.toLowerCase();
+          break;
+        case 'status':
+          aVal = a.status.toLowerCase();
+          bVal = b.status.toLowerCase();
+          break;
+        case 'assignedTo':
+          aVal = (a.assignedTo ?? '').toLowerCase();
+          bVal = (b.assignedTo ?? '').toLowerCase();
+          break;
+        case 'boardColumn':
+          aVal = (a.boardColumn ?? '').toLowerCase();
+          bVal = (b.boardColumn ?? '').toLowerCase();
+          break;
+        case 'deployDate':
+          aVal = a.deployDate ?? '';
+          bVal = b.deployDate ?? '';
+          break;
+        case 'targetDate':
+          aVal = a.targetDate ?? '';
+          bVal = b.targetDate ?? '';
+          break;
+        case 'parentFeature':
+          aVal = `${a.parentFeature.id} ${a.parentFeature.title}`.toLowerCase();
+          bVal = `${b.parentFeature.id} ${b.parentFeature.title}`.toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [childStories, sortState, filters]);
+
+  const handleSort = (field: SortField) => {
+    onSort(field);
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortState.field !== field) return null;
+    return sortState.direction === 'asc' ? '▲' : '▼';
+  };
+
+  const handleFilterChange = (key: keyof FilterState, value: string | boolean) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true });
+  };
+
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved;
+
+  if (isLoading) {
+    return (
+      <div className="table-container">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Assigned To</th>
+              <th>Board Column</th>
+              <th>Deploy Date</th>
+              <th>Target Date</th>
+              <th>Parent Feature</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...Array(5)].map((_, i) => (
+              <tr key={i}>
+                <td><LoadingSpinner size="sm" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-48 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-32 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  if (!hasSelectedFeatures) {
+    return (
+      <InfoAlert
+        message="Select one or more Features from the table above, then click 'Fetch Child User Stories' to retrieve their child User Stories."
+        type="info"
+      />
+    );
+  }
+
+  // Show table with button when features selected (regardless of childStories)
+  // "No results" message goes in tbody after fetch attempted
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-semibold text-neutral-900">
+          Child User Stories ({filteredAndSortedStories.length} of {childStories.length})
+        </h2>
+        <button
+          onClick={handleFetch}
+          className="btn-secondary"
+          disabled={isFetching || !hasSelectedFeatures}
+        >
+          {isFetching ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-neutral-600" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Fetching...
+            </>
+          ) : (
+            'Fetch Child User Stories'
+          )}
+        </button>
+      </div>
+
+      {/* Filter Controls */}
+      <div className="mb-4 p-3 bg-neutral-50 rounded-lg border border-neutral-200">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Status:</label>
+            <select
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">All</option>
+              {uniqueStatuses.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Assigned To:</label>
+            <select
+              value={filters.assignedTo}
+              onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">All</option>
+              {uniqueAssignees.map(assignee => (
+                <option key={assignee} value={assignee}>{assignee}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Board Column:</label>
+            <select
+              value={filters.boardColumn}
+              onChange={(e) => handleFilterChange('boardColumn', e.target.value)}
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">All</option>
+              {uniqueBoardColumns.map(column => (
+                <option key={column} value={column}>{column}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="hideRemoved"
+              checked={filters.hideRemoved}
+              onChange={(e) => handleFilterChange('hideRemoved', e.target.checked)}
+              className="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+            />
+            <label htmlFor="hideRemoved" className="text-sm text-neutral-700">Hide Removed</label>
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="text-sm text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="table-container scrollbar-thin">
+        <table className="table" role="grid">
+          <thead>
+            <tr>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('id')}>
+                <div className="flex items-center gap-1">
+                  ID
+                  {getSortIcon('id') && <span className="text-neutral-400">{getSortIcon('id')}</span>}
+                </div>
+              </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('title')}>
+                <div className="flex items-center gap-1">
+                  Title
+                  {getSortIcon('title') && <span className="text-neutral-400">{getSortIcon('title')}</span>}
+                </div>
+              </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('status')}>
+                <div className="flex items-center gap-1">
+                  Status
+                  {getSortIcon('status') && <span className="text-neutral-400">{getSortIcon('status')}</span>}
+                </div>
+              </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('assignedTo')}>
+                <div className="flex items-center gap-1">
+                  Assigned To
+                  {getSortIcon('assignedTo') && <span className="text-neutral-400">{getSortIcon('assignedTo')}</span>}
+                </div>
+              </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('boardColumn')}>
+                <div className="flex items-center gap-1">
+                  Board Column
+                  {getSortIcon('boardColumn') && <span className="text-neutral-400">{getSortIcon('boardColumn')}</span>}
+                </div>
+              </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('deployDate')}>
+                <div className="flex items-center gap-1">
+                  Deploy Date
+                  {getSortIcon('deployDate') && <span className="text-neutral-400">{getSortIcon('deployDate')}</span>}
+                </div>
+              </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('targetDate')}>
+                <div className="flex items-center gap-1">
+                  Target Date
+                  {getSortIcon('targetDate') && <span className="text-neutral-400">{getSortIcon('targetDate')}</span>}
+                </div>
+              </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('parentFeature')}>
+                <div className="flex items-center gap-1">
+                  Parent Feature
+                  {getSortIcon('parentFeature') && <span className="text-neutral-400">{getSortIcon('parentFeature')}</span>}
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredAndSortedStories.length === 0 && hasAttemptedFetch ? (
+              <tr>
+                <td colSpan={8} className="text-center py-8 text-neutral-500">
+                  No child User Stories found for the selected Features. This could mean the Features have no children, or the children are not of type 'User Story'.
+                </td>
+              </tr>
+            ) : (
+              filteredAndSortedStories.map(story => (
+              <tr key={`${story.id}-${story.parentFeature.id}`}>
+                <td className="font-mono font-medium">
+                  <a
+                    href={story.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+                  >
+                    {story.id}
+                  </a>
+                </td>
+                <td className="max-w-xs truncate" title={story.title}>
+                  {truncate(story.title, 60)}
+                </td>
+                <td>
+                  <span className={getStatusBadgeClass(story.status)}>
+                    {story.status}
+                  </span>
+                </td>
+                <td className="text-neutral-600">
+                  {story.assignedTo ?? '—'}
+                </td>
+                <td className="text-neutral-600">
+                  {story.boardColumn ?? '—'}
+                </td>
+                <td className="font-mono text-sm text-neutral-600">
+                  {formatDate(story.deployDate)}
+                </td>
+                <td className="font-mono text-sm text-neutral-600">
+                  {formatDate(story.targetDate)}
+                </td>
+                <td className="font-mono text-sm text-neutral-600">
+                  <a
+                    href={`/${story.parentFeature.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+                    title={story.parentFeature.title}
+                  >
+                    #{story.parentFeature.id}
+                  </a>
+                </td>
+              </tr>
+            )))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
