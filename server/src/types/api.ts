@@ -20,6 +20,7 @@ export interface ChildUserStory {
   parentFeature: {
     id: number;
     title: string;
+    url: string;
   };
   url: string;
 }
@@ -157,6 +158,12 @@ export function mapWorkItemToChildStory(
   const deployDateValue = fields[fieldMappings.deployDate] as string | undefined;
   const targetDateValue = fields[fieldMappings.targetDate] as string | undefined;
 
+  // Construct parent Feature URL
+  const parentFeatureWithUrl = {
+    ...parentFeature,
+    url: `${orgUrl}/${project}/_workitems/edit/${parentFeature.id}`,
+  };
+
   return {
     id: item.id,
     title: fields['System.Title'] as string,
@@ -165,7 +172,7 @@ export function mapWorkItemToChildStory(
     boardColumn: boardColumnValue ?? null,
     deployDate: deployDateValue ?? null,
     targetDate: targetDateValue ?? null,
-    parentFeature,
+    parentFeature: parentFeatureWithUrl,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

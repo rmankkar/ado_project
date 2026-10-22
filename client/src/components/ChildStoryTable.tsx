@@ -378,13 +378,13 @@ export function ChildStoryTable({
                 </td>
                 <td className="font-mono text-sm text-neutral-600">
                   <a
-                    href={`/${story.parentFeature.id}`}
+                    href={story.parentFeature.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
                     title={story.parentFeature.title}
                   >
-                    #{story.parentFeature.id}
+                    {story.parentFeature.id}
                   </a>
                 </td>
               </tr>

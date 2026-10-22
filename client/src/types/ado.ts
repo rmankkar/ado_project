@@ -18,6 +18,7 @@ export interface ChildUserStory {
   parentFeature: {
     id: number;
     title: string;
+    url: string;
   };
   url: string;
 }
