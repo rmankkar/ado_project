@@ -34,6 +34,7 @@ export function getStatusBadgeClass(status: string): string {
   const normalized = status.toLowerCase();
   if (normalized.includes('new') || normalized.includes('proposed')) return 'badge-new';
   if (normalized.includes('active') || normalized.includes('in progress') || normalized.includes('doing')) return 'badge-active';
+  if (normalized.includes('failed')) return 'badge-failed';
   if (normalized.includes('resolved') || normalized.includes('done') || normalized.includes('complete') || normalized.includes('ready for retest')) return 'badge-resolved';
   if (normalized.includes('closed') || normalized.includes('removed')) return 'badge-closed';
   return 'badge';
