@@ -96,7 +96,7 @@ function App() {
       {/* Tabs */}
       <Tabs tabs={tabs} activeTab={activeTab} onChange={(tabId) => setActiveTab(tabId as 'features' | 'bugs')} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {allErrors.length > 0 && activeTab === 'features' && (
           <div className="mb-6" role="alert">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">

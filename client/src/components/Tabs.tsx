@@ -13,7 +13,7 @@ interface TabsProps {
 export function Tabs({ tabs, activeTab, onChange }: TabsProps) {
   return (
     <div className="bg-white border-b border-neutral-200 sticky top-16 z-10">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
+      <nav className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
         <ul className="flex flex-wrap -mb-px gap-1" role="tablist">
           {tabs.map(tab => (
             <li key={tab.id} role="presentation">

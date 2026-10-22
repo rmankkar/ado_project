@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Bug, SortField, SortDirection } from '../types/ado.js';
-import { getStatusBadgeClass, formatDate, truncate } from '../utils/formatters.js';
+import { getStatusBadgeClass, formatDate } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
 
@@ -17,6 +17,7 @@ interface FilterState {
   assignedTo: string;
   boardColumn: string;
   severity: string;
+  searchText: string;
 }
 
 export function BugTable({
@@ -32,6 +33,7 @@ export function BugTable({
     assignedTo: '',
     boardColumn: '',
     severity: '',
+    searchText: '',
   });
 
   // Get unique values for filter dropdowns
@@ -68,6 +70,11 @@ export function BugTable({
     }
     if (filters.severity) {
       result = result.filter(s => s.severity === filters.severity);
+    }
+    // Apply search text filter (case-insensitive search on title)
+    if (filters.searchText) {
+      const searchLower = filters.searchText.toLowerCase();
+      result = result.filter(s => s.title.toLowerCase().includes(searchLower));
     }
 
     // Apply sorting
@@ -139,10 +146,10 @@ export function BugTable({
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', boardColumn: '', severity: '' });
+    setFilters({ status: '', assignedTo: '', boardColumn: '', severity: '', searchText: '' });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.severity;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.severity || filters.searchText;
 
   if (isLoading) {
     return (
@@ -201,6 +208,16 @@ export function BugTable({
       {/* Filter Controls */}
       <div className="mb-4 p-3 bg-neutral-50 rounded-lg border border-neutral-200">
         <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Search Title:</label>
+            <input
+              type="text"
+              value={filters.searchText}
+              onChange={(e) => handleFilterChange('searchText', e.target.value)}
+              placeholder="Search bug title..."
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-64"
+            />
+          </div>
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-neutral-700">Status:</label>
             <select
@@ -344,8 +361,8 @@ export function BugTable({
                     {bug.id}
                   </a>
                 </td>
-                <td className="max-w-xs truncate" title={bug.title}>
-                  {truncate(bug.title, 60)}
+                <td className="max-w-md whitespace-normal break-words" title={bug.title}>
+                  {bug.title}
                 </td>
                 <td>
                   <span className={getStatusBadgeClass(bug.status)}>
