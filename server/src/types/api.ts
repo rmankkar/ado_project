@@ -118,6 +118,31 @@ export interface FetchBugsResponse {
   errors: FetchError[];
 }
 
+export interface TestCase {
+  id: number;
+  title: string;
+  status: string;
+  assignedTo: string | null;
+  complexity: string | null;
+  tags: string | null;
+  createdBy: string | null;
+  parentUserStory: {
+    id: number;
+    title: string;
+    url: string;
+  } | null;
+  url: string;
+}
+
+export interface FetchTestCasesRequest {
+  iterationPath: string;
+}
+
+export interface FetchTestCasesResponse {
+  testCases: TestCase[];
+  errors: FetchError[];
+}
+
 export function mapWorkItemToChildStory(
   item: AdoWorkItem,
   orgUrl: string,
@@ -196,6 +221,52 @@ export function mapWorkItemToBug(
     boardColumn: boardColumnValue ?? null,
     createdDate: createdDateValue ?? null,
     changedDate: changedDateValue ?? null,
+    parentUserStory: parentUserStoryWithUrl,
+    url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
+  };
+}
+
+// Map raw complexity values to readable labels
+function mapComplexityValue(rawValue: string | undefined): string | null {
+  if (!rawValue) return null;
+  const complexityMap: Record<string, string> = {
+    '1-Simple': 'Simple',
+    '2-Medium': 'Medium',
+    '3-Complex': 'Complex',
+    'Not Defined': 'Not Defined',
+  };
+  return complexityMap[rawValue] ?? rawValue;
+}
+
+export function mapWorkItemToTestCase(
+  item: AdoWorkItem,
+  orgUrl: string,
+  parentUserStory: { id: number; title: string } | null,
+): TestCase {
+  const fields = item.fields as AdoWorkItemFields;
+  const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
+  const createdBy = fields['System.CreatedBy'] as AdoIdentityRef | undefined;
+  const project = fields['System.TeamProject'] as string;
+
+  const complexityRawValue = fields['Custom.Complexity'] as string | undefined;
+  const tagsValue = fields['System.Tags'] as string | undefined;
+
+  // Construct parent User Story URL if parent exists
+  const parentUserStoryWithUrl = parentUserStory
+    ? {
+        ...parentUserStory,
+        url: `${orgUrl}/${project}/_workitems/edit/${parentUserStory.id}`,
+      }
+    : null;
+
+  return {
+    id: item.id,
+    title: fields['System.Title'] as string,
+    status: fields['System.State'] as string,
+    assignedTo: assignedTo?.displayName ?? null,
+    complexity: mapComplexityValue(complexityRawValue),
+    tags: tagsValue ?? null,
+    createdBy: createdBy?.displayName ?? null,
     parentUserStory: parentUserStoryWithUrl,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };

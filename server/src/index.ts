@@ -10,6 +10,7 @@ import fieldMappingsRouter from './routes/fieldMappings.js';
 import healthRouter from './routes/health.js';
 import iterationsRouter from './routes/iterations.js';
 import bugsRouter from './routes/bugs.js';
+import testCasesRouter from './routes/testCases.js';
 
 validateEnv();
 
@@ -47,6 +48,7 @@ app.use('/api/child-stories', childStoriesRouter);
 app.use('/api/field-mappings', fieldMappingsRouter);
 app.use('/api/iterations', iterationsRouter);
 app.use('/api/bugs', bugsRouter);
+app.use('/api/test-cases', testCasesRouter);
 
 // 404 handler
 app.use(notFoundHandler);

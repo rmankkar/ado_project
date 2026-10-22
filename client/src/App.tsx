@@ -7,12 +7,13 @@ import { FeatureTable } from './components/FeatureTable.js';
 import { ChildStoryTable } from './components/ChildStoryTable.js';
 import { ReportDashboard } from './components/ReportDashboard.js';
 import { IterationBugsTab } from './components/IterationBugsTab.js';
+import { TestCaseReviewTab } from './components/TestCaseReviewTab.js';
 import { Tabs } from './components/Tabs.js';
 import { LoadingOverlay } from './components/LoadingSpinner.js';
 import type { SortField, SortDirection } from './types/ado.js';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'features' | 'bugs'>('features');
+  const [activeTab, setActiveTab] = useState<'features' | 'bugs' | 'testcases'>('features');
   const [view, setView] = useState<'tables' | 'report'>('tables');
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<number>>(new Set());
   const [sortState, setSortState] = useState<{ field: SortField; direction: SortDirection }>({ field: 'id', direction: 'asc' });
@@ -85,6 +86,7 @@ function App() {
   const tabs = [
     { id: 'features', label: 'Features & User Stories' },
     { id: 'bugs', label: 'Iteration Bugs' },
+    { id: 'testcases', label: 'Test Case Review' },
   ];
 
   const allErrors = [...fetchErrors, ...childStoryErrors];
@@ -94,7 +96,7 @@ function App() {
       <Header />
 
       {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={(tabId) => setActiveTab(tabId as 'features' | 'bugs')} />
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={(tabId) => setActiveTab(tabId as 'features' | 'bugs' | 'testcases')} />
 
       <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {allErrors.length > 0 && activeTab === 'features' && (
@@ -154,8 +156,10 @@ function App() {
               <ReportDashboard onBack={() => setView('tables')} />
             )}
           </>
-        ) : (
+        ) : activeTab === 'bugs' ? (
           <IterationBugsTab />
+        ) : (
+          <TestCaseReviewTab />
         )}
       </main>
 

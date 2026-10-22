@@ -94,7 +94,28 @@ export interface FetchBugsResponse {
   errors: FetchError[];
 }
 
-export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory';
+export interface TestCase {
+  id: number;
+  title: string;
+  status: string;
+  assignedTo: string | null;
+  complexity: string | null;
+  tags: string | null;
+  createdBy: string | null;
+  parentUserStory: {
+    id: number;
+    title: string;
+    url: string;
+  } | null;
+  url: string;
+}
+
+export interface FetchTestCasesResponse {
+  testCases: TestCase[];
+  errors: FetchError[];
+}
+
+export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {

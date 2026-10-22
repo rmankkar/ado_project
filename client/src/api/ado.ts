@@ -5,6 +5,7 @@ import type {
   HealthResponse,
   Iteration,
   Bug,
+  TestCase,
   FetchError,
 } from '../types/ado.js';
 
@@ -56,6 +57,13 @@ export const adoApi = {
 
   async fetchBugs(iterationPath: string): Promise<{ bugs: Bug[]; errors: FetchError[] }> {
     return fetchJson<{ bugs: Bug[]; errors: FetchError[] }>(`${API_BASE}/bugs`, {
+      method: 'POST',
+      body: JSON.stringify({ iterationPath }),
+    });
+  },
+
+  async fetchTestCases(iterationPath: string): Promise<{ testCases: TestCase[]; errors: FetchError[] }> {
+    return fetchJson<{ testCases: TestCase[]; errors: FetchError[] }>(`${API_BASE}/test-cases`, {
       method: 'POST',
       body: JSON.stringify({ iterationPath }),
     });
