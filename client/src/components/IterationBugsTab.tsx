@@ -167,8 +167,6 @@ export function IterationBugsTab() {
       <BugTable
         bugs={bugs}
         isLoading={isFetchingBugs}
-        isFetching={isFetchingBugs}
-        onFetch={handleFetchBugs}
         selectedIteration={selectedIterationPath}
         onSort={handleSort}
         sortState={sortState}

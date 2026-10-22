@@ -15,6 +15,7 @@ const router = Router();
 router.post('/',
   validate(fetchBugsSchema),
   async (req, res) => {
+    console.log('Received request to fetch bugs for iteration:', req.body.iterationPath);
     const { iterationPath } = req.body;
     const result = await fetchBugs(iterationPath);
 

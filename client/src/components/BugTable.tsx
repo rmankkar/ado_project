@@ -7,8 +7,6 @@ import { InfoAlert } from './ErrorAlert.js';
 interface BugTableProps {
   bugs: Bug[];
   isLoading: boolean;
-  isFetching: boolean;
-  onFetch: () => void;
   selectedIteration: string;
   onSort: (field: SortField) => void;
   sortState: { field: SortField; direction: SortDirection };
@@ -24,25 +22,17 @@ interface FilterState {
 export function BugTable({
   bugs,
   isLoading,
-  isFetching,
-  onFetch,
   selectedIteration,
   onSort,
   sortState,
 }: BugTableProps) {
   const hasSelectedIteration = selectedIteration.length > 0;
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     status: '',
     assignedTo: '',
     boardColumn: '',
     severity: '',
   });
-
-  const handleFetch = () => {
-    setHasAttemptedFetch(true);
-    onFetch();
-  };
 
   // Get unique values for filter dropdowns
   const uniqueStatuses = useMemo((): string[] =>
@@ -206,23 +196,6 @@ export function BugTable({
         <h2 className="text-lg font-semibold text-neutral-900">
           Open Bugs ({filteredAndSortedBugs.length} of {bugs.length})
         </h2>
-        <button
-          onClick={handleFetch}
-          className="btn-secondary"
-          disabled={isFetching || !hasSelectedIteration}
-        >
-          {isFetching ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-neutral-600" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Fetching...
-            </>
-          ) : (
-            'Get Open Bugs'
-          )}
-        </button>
       </div>
 
       {/* Filter Controls */}
@@ -352,7 +325,7 @@ export function BugTable({
             </tr>
           </thead>
           <tbody>
-            {filteredAndSortedBugs.length === 0 && hasAttemptedFetch ? (
+            {filteredAndSortedBugs.length === 0 ? (
               <tr>
                 <td colSpan={9} className="text-center py-8 text-neutral-500">
                   No open bugs found for the selected iteration. This could mean there are no bugs linked to User Stories in this iteration.
