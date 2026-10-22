@@ -55,6 +55,42 @@ export function IterationBugsTab() {
     return s !== 'closed' && s !== 'removed';
   }).length;
 
+  // Compute unique User Story count (bugs with parentUserStory)
+  const uniqueUserStoryCount = useMemo(() => {
+    const userStoryIds = new Set<number>();
+    for (const bug of bugs) {
+      if (bug.parentUserStory?.id) {
+        userStoryIds.add(bug.parentUserStory.id);
+      }
+    }
+    return userStoryIds.size;
+  }, [bugs]);
+
+  // Compute severity counts for the pie chart
+  const bugSeverityCounts = useMemo((): StatusCount[] => {
+    const severityMap = new Map<string, number>();
+    for (const bug of bugs) {
+      const severity = bug.severity;
+      if (!severity) continue;
+      severityMap.set(severity, (severityMap.get(severity) ?? 0) + 1);
+    }
+    return Array.from(severityMap.entries())
+      .map(([severity, count]) => ({ status: severity, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [bugs]);
+
+  // Compute assigned to counts for the pie chart
+  const bugAssignedToCounts = useMemo((): StatusCount[] => {
+    const assignedMap = new Map<string, number>();
+    for (const bug of bugs) {
+      const assigned = bug.assignedTo ?? 'Unassigned';
+      assignedMap.set(assigned, (assignedMap.get(assigned) ?? 0) + 1);
+    }
+    return Array.from(assignedMap.entries())
+      .map(([assigned, count]) => ({ status: assigned, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [bugs]);
+
   const allErrors = [...iterationErrors, ...bugErrors];
 
   return (
@@ -151,15 +187,61 @@ export function IterationBugsTab() {
         </div>
       )}
 
-      {/* Bug Status Pie Chart */}
+      {/* Insights Section */}
       {selectedIterationPath && (totalOpenBugs > 0 || bugs.length > 0) && (
-        <div className="card p-6">
-          <StatusPieChart
-            title="Open Bug Status Distribution (Closed/Removed excluded)"
-            data={bugStatusCounts}
-            total={totalOpenBugs}
-            height={300}
-          />
+        <div className="card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-50 rounded-lg">
+                <div className="text-2xl font-bold text-primary-700">{totalOpenBugs}</div>
+                <div className="text-sm text-primary-600">Total Open Bugs</div>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-700">{uniqueUserStoryCount}</div>
+                <div className="text-sm text-green-600">Unique User Stories</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-neutral-600">
+              <span className="px-3 py-1 bg-neutral-100 rounded">
+                Iteration: <span className="font-medium text-neutral-900">{selectedIterationPath.split('\\').pop()}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pie Charts - 3 Columns */}
+      {selectedIterationPath && (totalOpenBugs > 0 || bugs.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Bug Status Pie Chart */}
+          <div className="card p-6">
+            <StatusPieChart
+              title="Bug Status Distribution (Closed/Removed excluded)"
+              data={bugStatusCounts}
+              total={totalOpenBugs}
+              height={280}
+            />
+          </div>
+
+          {/* Severity Pie Chart */}
+          <div className="card p-6">
+            <StatusPieChart
+              title="Bug Severity Distribution"
+              data={bugSeverityCounts}
+              total={bugs.length}
+              height={280}
+            />
+          </div>
+
+          {/* Assigned To Pie Chart */}
+          <div className="card p-6">
+            <StatusPieChart
+              title="Bugs by Assignee"
+              data={bugAssignedToCounts}
+              total={bugs.length}
+              height={280}
+            />
+          </div>
         </div>
       )}
 

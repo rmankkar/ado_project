@@ -123,7 +123,7 @@ export function StatusPieChart({ title, data, total, height = 280 }: StatusPieCh
                 paddingAngle={1.5}
                 dataKey="count"
                 nameKey="status"
-                label={({ status, percentage }) => percentage !== '0.0' ? `${status} (${percentage}%)` : ''}
+                // label={({ status, percentage }) => percentage !== '0.0' ? `${status} (${percentage}%)` : ''}
                 labelLine={false}
               >
                 {chartData.map((item, index) => (
