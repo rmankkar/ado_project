@@ -13,6 +13,25 @@ export function formatDate(dateString: string | null): string {
   }
 }
 
+/**
+ * Check if a date string represents a date in the past (before today)
+ */
+export function isDateInPast(dateString: string | null): boolean {
+  if (!dateString) return false;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return false;
+    // Compare only the date part (ignore time)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    return compareDate < today;
+  } catch {
+    return false;
+  }
+}
+
 export function formatDateTime(dateString: string | null): string {
   if (!dateString) return '—';
   try {

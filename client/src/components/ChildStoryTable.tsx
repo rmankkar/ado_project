@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ChildUserStory, SortField, SortDirection } from '../types/ado.js';
-import { getStatusBadgeClass, formatDate } from '../utils/formatters.js';
+import { getStatusBadgeClass, formatDate, isDateInPast } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
 
@@ -81,8 +81,8 @@ export function ChildStoryTable({
     // Apply sorting
     const { field, direction } = sortState;
     result.sort((a, b) => {
-      let aVal: string | number;
-      let bVal: string | number;
+      let aVal: string | number | Date;
+      let bVal: string | number | Date;
 
       switch (field) {
         case 'id':
@@ -106,12 +106,12 @@ export function ChildStoryTable({
           bVal = (b.boardColumn ?? '').toLowerCase();
           break;
         case 'deployDate':
-          aVal = a.deployDate ?? '';
-          bVal = b.deployDate ?? '';
+          aVal = a.deployDate ? new Date(a.deployDate) : new Date(0);
+          bVal = b.deployDate ? new Date(b.deployDate) : new Date(0);
           break;
         case 'targetDate':
-          aVal = a.targetDate ?? '';
-          bVal = b.targetDate ?? '';
+          aVal = a.targetDate ? new Date(a.targetDate) : new Date(0);
+          bVal = b.targetDate ? new Date(b.targetDate) : new Date(0);
           break;
         case 'parentFeature':
           aVal = `${a.parentFeature.id} ${a.parentFeature.title}`.toLowerCase();
@@ -370,10 +370,10 @@ export function ChildStoryTable({
                 <td className="text-neutral-600">
                   {story.boardColumn ?? '—'}
                 </td>
-                <td className="font-mono text-sm text-neutral-600">
+                <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.deployDate) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.deployDate) ? 600 : 400 }}>
                   {formatDate(story.deployDate)}
                 </td>
-                <td className="font-mono text-sm text-neutral-600">
+                <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.targetDate) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.targetDate) ? 600 : 400 }}>
                   {formatDate(story.targetDate)}
                 </td>
                 <td className="font-mono text-sm text-neutral-600">
