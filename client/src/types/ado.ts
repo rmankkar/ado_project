@@ -22,6 +22,34 @@ export interface ChildUserStory {
   url: string;
 }
 
+export interface Iteration {
+  id: string;
+  name: string;
+  path: string;
+  startDate: string | null;
+  finishDate: string | null;
+  structureType: string;
+  hasChildren: boolean;
+  url: string;
+}
+
+export interface Bug {
+  id: number;
+  title: string;
+  status: string;
+  assignedTo: string | null;
+  severity: string | null;
+  priority: number | null;
+  boardColumn: string | null;
+  createdDate: string | null;
+  changedDate: string | null;
+  parentUserStory: {
+    id: number;
+    title: string;
+  } | null;
+  url: string;
+}
+
 export interface FetchError {
   id: number;
   message: string;
@@ -50,7 +78,22 @@ export interface HealthResponse {
   adoConfigured: boolean;
 }
 
-export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature';
+export interface StatusCount {
+  status: string;
+  count: number;
+}
+
+export interface FetchIterationsResponse {
+  iterations: Iteration[];
+  errors: FetchError[];
+}
+
+export interface FetchBugsResponse {
+  bugs: Bug[];
+  errors: FetchError[];
+}
+
+export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {

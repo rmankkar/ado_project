@@ -3,10 +3,9 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { StatusCount } from '../hooks/useReport.js';
+import type { StatusCount } from '../types/ado.js';
 
 /**
  * Semantic color mapping for common ADO work item states.
@@ -25,22 +24,12 @@ const STATUS_COLOR_MAP: Record<string, string> = {
   'Backlog': '#8b5cf6',       // violet
   'Committed': '#06b6d4',     // cyan
 
-  // User Story states (common ADO Agile process)
-  'New': '#3b82f6',
-  'Active': '#f59e0b',
-  'Resolved': '#22c55e',
-  'Closed': '#6b7280',
-  'Removed': '#ef4444',
-
   // CMMI process
   'Proposed': '#8b5cf6',
-  'In Progress': '#f59e0b',
   'Complete': '#22c55e',
 
   // Scrum process
-  'To Do': '#3b82f6',
   'Doing': '#f59e0b',
-  'Done': '#22c55e',
 };
 
 // Fallback colors for unknown states
@@ -57,11 +46,10 @@ interface StatusPieChartProps {
   title: string;
   data: StatusCount[];
   total: number;
-  showLegend?: boolean;
   height?: number;
 }
 
-export function StatusPieChart({ title, data, total, showLegend = true, height = 280 }: StatusPieChartProps) {
+export function StatusPieChart({ title, data, total, height = 280 }: StatusPieChartProps) {
   if (data.length === 0) {
     return (
       <div className="card p-6 text-center" role="img" aria-label={`${title}: No data available`}>
@@ -102,28 +90,6 @@ export function StatusPieChart({ title, data, total, showLegend = true, height =
         <div className="text-xs text-neutral-600 dark:text-neutral-400">
           Percentage: <span className="font-medium text-neutral-900 dark:text-neutral-100">{item.percentage}%</span>
         </div>
-      </div>
-    );
-  };
-
-  // Custom legend item with color indicator
-  const renderLegendItem = ({ color, value }: { color: string; value: string }) => {
-    const item = chartData.find(d => d.status === value);
-    if (!item) return null;
-    return (
-      <div
-        key={value}
-        className="flex items-center gap-1.5 px-1 py-0.5 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded transition-colors"
-        style={{ minWidth: 160 }}
-      >
-        <div
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: color }}
-          aria-hidden="true"
-        />
-        <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate max-w-[100px]">
-          {value} ({item.count})
-        </span>
       </div>
     );
   };

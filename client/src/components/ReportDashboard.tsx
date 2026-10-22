@@ -65,7 +65,6 @@ export function ReportDashboard({ onBack }: { onBack: () => void }) {
                 data={report.boardColumnCounts}
                 total={report.totalChildStories}
                 height={280}
-                showLegend={report.boardColumnCounts.length <= 5}
               />
             ))}
             {featureReports.some(r => r.totalChildStories === 0) && (

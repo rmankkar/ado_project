@@ -115,3 +115,18 @@ export interface AdoProject {
   revision: number;
   visibility: string;
 }
+
+export interface AdoIterationNode {
+  id: string;
+  name: string;
+  path: string;
+  structureType: string;
+  hasChildren: boolean;
+  attributes: {
+    startDate: string | null;
+    finishDate: string | null;
+    timeFrame: string;
+  };
+  children?: AdoIterationNode[];
+  url: string;
+}

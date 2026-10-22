@@ -45,16 +45,16 @@ export function ChildStoryTable({
   };
 
   // Get unique values for filter dropdowns
-  const uniqueStatuses = useMemo(() =>
+  const uniqueStatuses = useMemo((): string[] =>
     [...new Set(childStories.map(s => s.status).filter(Boolean))].sort(),
     [childStories]
   );
-  const uniqueAssignees = useMemo(() =>
-    [...new Set(childStories.map(s => s.assignedTo).filter(Boolean))].sort(),
+  const uniqueAssignees = useMemo((): string[] =>
+    [...new Set(childStories.map(s => s.assignedTo).filter((v): v is string => v !== null))].sort(),
     [childStories]
   );
-  const uniqueBoardColumns = useMemo(() =>
-    [...new Set(childStories.map(s => s.boardColumn).filter(Boolean))].sort(),
+  const uniqueBoardColumns = useMemo((): string[] =>
+    [...new Set(childStories.map(s => s.boardColumn).filter((v): v is string => v !== null))].sort(),
     [childStories]
   );
 

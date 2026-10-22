@@ -8,6 +8,8 @@ import featuresRouter from './routes/features.js';
 import childStoriesRouter from './routes/childStories.js';
 import fieldMappingsRouter from './routes/fieldMappings.js';
 import healthRouter from './routes/health.js';
+import iterationsRouter from './routes/iterations.js';
+import bugsRouter from './routes/bugs.js';
 
 validateEnv();
 
@@ -43,6 +45,8 @@ app.use('/api/health', healthRouter);
 app.use('/api/features', featuresRouter);
 app.use('/api/child-stories', childStoriesRouter);
 app.use('/api/field-mappings', fieldMappingsRouter);
+app.use('/api/iterations', iterationsRouter);
+app.use('/api/bugs', bugsRouter);
 
 // 404 handler
 app.use(notFoundHandler);

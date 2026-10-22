@@ -9,6 +9,7 @@ interface EnvConfig {
   adoFieldDeployDate: string;
   adoFieldTargetDate: string;
   adoLinkType: string;
+  adoIterationBasePath: string | undefined;
   port: number;
   nodeEnv: string;
   corsOrigin: string;
@@ -34,6 +35,7 @@ export const env: EnvConfig = {
   adoFieldDeployDate: getOptionalEnv('ADO_FIELD_DEPLOY_DATE', 'Custom.DeployDate'),
   adoFieldTargetDate: getOptionalEnv('ADO_FIELD_TARGET_DATE', 'Microsoft.VSTS.Scheduling.TargetDate'),
   adoLinkType: getOptionalEnv('ADO_LINK_TYPE', 'System.LinkTypes.Hierarchy-Forward'),
+  adoIterationBasePath: process.env.ADO_ITERATION_BASE_PATH,
   port: parseInt(getOptionalEnv('PORT', '3001'), 10),
   nodeEnv: getOptionalEnv('NODE_ENV', 'development'),
   corsOrigin: getOptionalEnv('CORS_ORIGIN', 'http://localhost:5173'),
@@ -57,3 +59,26 @@ export const fieldMappings = {
   deployDate: env.adoFieldDeployDate,
   targetDate: env.adoFieldTargetDate,
 } as const;
+
+/**
+ * Extracts the relative path after "Global_Data_Project" from ADO_ITERATION_BASE_PATH
+ * e.g., "Global_Data_Project\\Iteration\\SE\\PI22" -> "Iteration/SE/PI22"
+ * e.g., "Global_Data_Project\\SE\\PI22" -> "SE/PI22"
+ */
+export function getIterationApiPath(): string | undefined {
+  const basePath = env.adoIterationBasePath;
+  if (!basePath) return undefined;
+
+  // Find "Global_Data_Project" and get everything after it
+  const marker = 'Global_Data_Project';
+  const index = basePath.indexOf(marker);
+  if (index === -1) return undefined;
+
+  // Get the part after the marker
+  const relativePath = basePath.substring(index + marker.length);
+
+  // Convert backslashes to forward slashes, remove leading/trailing slashes
+  return relativePath
+    .replace(/\\/g, '/')
+    .replace(/^\/+|\/+$/g, '');
+}

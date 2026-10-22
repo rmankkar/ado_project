@@ -1,4 +1,4 @@
-import { env } from '../config/env.js';
+import { env, getIterationApiPath } from '../config/env.js';
 
 const API_VERSION = '7.1';
 
@@ -26,6 +26,15 @@ export function getBoardsUrl(teamId: string): string {
 
 export function getBoardColumnsUrl(teamId: string, boardId: string): string {
   return `${env.adoOrgUrl}/${encodeURIComponent(env.adoProject)}/${teamId}/_apis/work/boards/${boardId}/columns?api-version=${API_VERSION}`;
+}
+
+export function getIterationsUrl(depth: number = 3): string {
+  const apiPath = getIterationApiPath();
+  if (apiPath) {
+    return `${env.adoOrgUrl}/${encodeURIComponent(env.adoProject)}/_apis/wit/classificationNodes/Iterations/${apiPath}?api-version=${API_VERSION}&$depth=${depth}`;
+  }
+  // Fallback to root iterations if no base path configured
+  return `${env.adoOrgUrl}/${encodeURIComponent(env.adoProject)}/_apis/wit/classificationNodes/Iterations?api-version=${API_VERSION}&$depth=${depth}`;
 }
 
 export function getAuthHeader(): string {

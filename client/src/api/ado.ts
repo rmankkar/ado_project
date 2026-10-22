@@ -3,6 +3,9 @@ import type {
   FetchChildStoriesResponse,
   FieldMappingsResponse,
   HealthResponse,
+  Iteration,
+  Bug,
+  FetchError,
 } from '../types/ado.js';
 
 const API_BASE = '/api';
@@ -45,6 +48,17 @@ export const adoApi = {
 
   async getFieldMappings(): Promise<FieldMappingsResponse> {
     return fetchJson<FieldMappingsResponse>(`${API_BASE}/field-mappings`);
+  },
+
+  async fetchIterations(): Promise<{ iterations: Iteration[]; errors: FetchError[] }> {
+    return fetchJson<{ iterations: Iteration[]; errors: FetchError[] }>(`${API_BASE}/iterations`);
+  },
+
+  async fetchBugs(iterationPath: string): Promise<{ bugs: Bug[]; errors: FetchError[] }> {
+    return fetchJson<{ bugs: Bug[]; errors: FetchError[] }>(`${API_BASE}/bugs`, {
+      method: 'POST',
+      body: JSON.stringify({ iterationPath }),
+    });
   },
 };
 

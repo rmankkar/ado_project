@@ -75,6 +75,48 @@ export function mapWorkItemToFeature(item: AdoWorkItem, orgUrl: string): Feature
   };
 }
 
+export interface Iteration {
+  id: string;
+  name: string;
+  path: string;
+  startDate: string | null;
+  finishDate: string | null;
+  structureType: string;
+  hasChildren: boolean;
+  url: string;
+}
+
+export interface Bug {
+  id: number;
+  title: string;
+  status: string;
+  assignedTo: string | null;
+  severity: string | null;
+  priority: number | null;
+  boardColumn: string | null;
+  createdDate: string | null;
+  changedDate: string | null;
+  parentUserStory: {
+    id: number;
+    title: string;
+  } | null;
+  url: string;
+}
+
+export interface FetchIterationsResponse {
+  iterations: Iteration[];
+  errors: FetchError[];
+}
+
+export interface FetchBugsRequest {
+  iterationPath: string;
+}
+
+export interface FetchBugsResponse {
+  bugs: Bug[];
+  errors: FetchError[];
+}
+
 export function mapWorkItemToChildStory(
   item: AdoWorkItem,
   orgUrl: string,
@@ -98,6 +140,54 @@ export function mapWorkItemToChildStory(
     deployDate: deployDateValue ?? null,
     targetDate: targetDateValue ?? null,
     parentFeature,
+    url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
+  };
+}
+
+export function mapWorkItemToIteration(item: AdoWorkItem, orgUrl: string): Iteration {
+  const fields = item.fields as AdoWorkItemFields;
+  const project = fields['System.TeamProject'] as string;
+  const iterationPath = fields['System.IterationPath'] as string;
+
+  return {
+    id: iterationPath,
+    name: item.id.toString(),
+    path: iterationPath,
+    startDate: fields['Microsoft.VSTS.Scheduling.StartDate'] as string | null,
+    finishDate: fields['Microsoft.VSTS.Scheduling.FinishDate'] as string | null,
+    structureType: 'iteration',
+    hasChildren: false,
+    url: `${orgUrl}/${project}/_sprints/taskboard/${item.id}`,
+  };
+}
+
+export function mapWorkItemToBug(
+  item: AdoWorkItem,
+  orgUrl: string,
+  parentUserStory: { id: number; title: string } | null,
+  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string }
+): Bug {
+  const fields = item.fields as AdoWorkItemFields;
+  const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
+  const project = fields['System.TeamProject'] as string;
+
+  const boardColumnValue = fields[fieldMappings.boardColumn] as string | undefined;
+  const severityValue = fields['Microsoft.VSTS.Common.Severity'] as string | undefined;
+  const priorityValue = fields['Microsoft.VSTS.Common.Priority'] as number | undefined;
+  const createdDateValue = fields['System.CreatedDate'] as string | undefined;
+  const changedDateValue = fields['System.ChangedDate'] as string | undefined;
+
+  return {
+    id: item.id,
+    title: fields['System.Title'] as string,
+    status: fields['System.State'] as string,
+    assignedTo: assignedTo?.displayName ?? null,
+    severity: severityValue ?? null,
+    priority: priorityValue ?? null,
+    boardColumn: boardColumnValue ?? null,
+    createdDate: createdDateValue ?? null,
+    changedDate: changedDateValue ?? null,
+    parentUserStory,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

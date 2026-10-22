@@ -6,10 +6,13 @@ import { FeatureInput } from './components/FeatureInput.js';
 import { FeatureTable } from './components/FeatureTable.js';
 import { ChildStoryTable } from './components/ChildStoryTable.js';
 import { ReportDashboard } from './components/ReportDashboard.js';
+import { IterationBugsTab } from './components/IterationBugsTab.js';
+import { Tabs } from './components/Tabs.js';
 import { LoadingOverlay } from './components/LoadingSpinner.js';
 import type { SortField, SortDirection } from './types/ado.js';
 
 function App() {
+  const [activeTab, setActiveTab] = useState<'features' | 'bugs'>('features');
   const [view, setView] = useState<'tables' | 'report'>('tables');
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<number>>(new Set());
   const [sortState, setSortState] = useState<{ field: SortField; direction: SortDirection }>({ field: 'id', direction: 'asc' });
@@ -79,14 +82,22 @@ function App() {
     // Errors are cleared on next fetch
   }, []);
 
+  const tabs = [
+    { id: 'features', label: 'Features & User Stories' },
+    { id: 'bugs', label: 'Iteration Bugs' },
+  ];
+
   const allErrors = [...fetchErrors, ...childStoryErrors];
 
   return (
     <div className="min-h-screen bg-neutral-50">
       <Header />
 
+      {/* Tabs */}
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={(tabId) => setActiveTab(tabId as 'features' | 'bugs')} />
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {allErrors.length > 0 && (
+        {allErrors.length > 0 && activeTab === 'features' && (
           <div className="mb-6" role="alert">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <h4 className="text-sm font-semibold text-red-800 mb-2">Errors</h4>
@@ -105,44 +116,50 @@ function App() {
           </div>
         )}
 
-        {view === 'tables' ? (
+        {activeTab === 'features' ? (
           <>
-            <FeatureInput
-              onFetch={handleFetchFeatures}
-              onReport={handleReport}
-              isFetching={isFetchingFeatures}
-              isReporting={false}
-              hasFeatures={features.length > 0}
-              fetchErrors={[]}
-              onDismissErrors={handleDismissFetchErrors}
-            />
+            {view === 'tables' ? (
+              <>
+                <FeatureInput
+                  onFetch={handleFetchFeatures}
+                  onReport={handleReport}
+                  isFetching={isFetchingFeatures}
+                  isReporting={false}
+                  hasFeatures={features.length > 0}
+                  fetchErrors={[]}
+                  onDismissErrors={handleDismissFetchErrors}
+                />
 
-            <FeatureTable
-              features={features}
-              isLoading={isFetchingFeatures}
-              selectedIds={selectedFeatureIds}
-              onSelectAll={handleSelectAll}
-              onSelectOne={handleSelectOne}
-              onSort={handleSort}
-              sortState={sortState}
-            />
+                <FeatureTable
+                  features={features}
+                  isLoading={isFetchingFeatures}
+                  selectedIds={selectedFeatureIds}
+                  onSelectAll={handleSelectAll}
+                  onSelectOne={handleSelectOne}
+                  onSort={handleSort}
+                  sortState={sortState}
+                />
 
-            <ChildStoryTable
-              childStories={childStories}
-              isLoading={isFetchingChildStories}
-              isFetching={isFetchingChildStories}
-              onFetch={handleFetchChildStories}
-              selectedFeatureIds={selectedFeatureIds}
-              onSort={handleChildSort}
-              sortState={childSortState}
-            />
+                <ChildStoryTable
+                  childStories={childStories}
+                  isLoading={isFetchingChildStories}
+                  isFetching={isFetchingChildStories}
+                  onFetch={handleFetchChildStories}
+                  selectedFeatureIds={selectedFeatureIds}
+                  onSort={handleChildSort}
+                  sortState={childSortState}
+                />
+              </>
+            ) : (
+              <ReportDashboard onBack={() => setView('tables')} />
+            )}
           </>
         ) : (
-          <ReportDashboard onBack={() => setView('tables')} />
+          <IterationBugsTab />
         )}
       </main>
 
-      {(isFetchingFeatures || isFetchingChildStories) && (
+      {(isFetchingFeatures || isFetchingChildStories) && activeTab === 'features' && (
         <LoadingOverlay message={isFetchingFeatures ? 'Fetching Features...' : 'Fetching Child User Stories...'} />
       )}
     </div>

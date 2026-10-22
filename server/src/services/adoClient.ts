@@ -6,8 +6,9 @@ import type {
   AdoTeam,
   AdoBoard,
   AdoBoardColumn,
+  AdoIterationNode,
 } from '../types/ado.js';
-import { getWorkItemsUrl, getWorkItemRelationsUrl, getWiqlUrl, getTeamsUrl, getBoardsUrl, getBoardColumnsUrl, getAuthHeader, DEFAULT_FIELDS } from '../utils/adoUrls.js';
+import { getWorkItemsUrl, getWorkItemRelationsUrl, getWiqlUrl, getTeamsUrl, getBoardsUrl, getBoardColumnsUrl, getIterationsUrl, getAuthHeader, DEFAULT_FIELDS } from '../utils/adoUrls.js';
 import { chunkArray, MAX_BATCH_SIZE } from '../utils/batching.js';
 
 interface FetchOptions {
@@ -151,6 +152,16 @@ class AdoClient {
     }
 
     return mapping;
+  }
+
+  // Fetch iterations via Classification Nodes REST API (more reliable than WIQL)
+  async getIterations(depth: number = 3): Promise<AdoIterationNode[]> {
+    const url = getIterationsUrl(depth);
+    console.log(`Fetching iterations from ADO API: ${url}`);
+    const response = await this.fetchWithRetry<AdoIterationNode>(url);
+    console.log(`Fetched iterations root node from ADO API:`, response.name);
+    // The API returns a single root node with children - return the children array
+    return response.children ?? [];
   }
 }
 
