@@ -76,20 +76,27 @@ async function fetchParentUserStories(parentIds: number[]): Promise<Map<number, 
 
   try {
     const uniqueParentIds = [...new Set(parentIds)];
+    console.log('[DEBUG] Fetching parent items for IDs:', uniqueParentIds);
     const parentItemsMap = await fetchWorkItemsByIds(uniqueParentIds);
+    console.log('[DEBUG] Parent items fetched:', parentItemsMap.size);
 
     for (const [id, item] of parentItemsMap) {
       const title = item.fields['System.Title'] as string;
       const workItemType = item.fields['System.WorkItemType'] as string;
+      console.log('[DEBUG] Parent item', id, '- Type:', workItemType, 'Title:', title);
       // Only include User Stories as parents
       if (workItemType === 'User Story') {
         parentMap.set(id, title);
+      } else {
+        console.log('[DEBUG] Skipping parent', id, '- not a User Story (type:', workItemType, ')');
       }
     }
-  } catch {
+  } catch (error) {
+    console.error('[DEBUG] Error fetching parent User Stories:', error);
     // If we can't fetch parent titles, we'll continue without them
   }
 
+  console.log('[DEBUG] Final parent title map:', Object.fromEntries(parentMap));
   return parentMap;
 }
 
@@ -104,10 +111,13 @@ export async function fetchBugs(iterationPath: string): Promise<FetchBugsResult>
   try {
     // Run WIQL to directly get Bugs in the iteration (not via User Story links)
     const query = buildDirectBugsQuery(iterationPath);
+    console.log('[DEBUG] WIQL Query:', query);
     const wiqlResult = await adoClient.runWiql(query);
+    console.log('[DEBUG] WIQL Result workItems count:', wiqlResult.workItems.length);
 
     // Extract unique bug work item IDs
     const bugIds = [...new Set(wiqlResult.workItems.map(w => w.id))];
+    console.log('[DEBUG] Bug IDs from WIQL:', bugIds);
 
     if (bugIds.length === 0) {
       return { bugs: [], errors: [] };
@@ -115,18 +125,23 @@ export async function fetchBugs(iterationPath: string): Promise<FetchBugsResult>
 
     // Fetch full work item details for bugs
     const bugItemsMap = await fetchWorkItemsByIds(bugIds);
+    console.log('[DEBUG] Bug items fetched:', bugItemsMap.size);
 
     // Collect parent IDs from the bugs (System.Parent field)
     const parentIds: number[] = [];
     for (const bugItem of bugItemsMap.values()) {
-      const parent = bugItem.fields['System.Parent'] as { id: number } | undefined;
-      if (parent?.id) {
-        parentIds.push(parent.id);
+      const parent = bugItem.fields['System.Parent'] as number | undefined;
+      console.log('[DEBUG] Bug', bugItem.id, 'System.Parent:', parent);
+      if (parent) {
+        console.log('[DEBUG] Adding parent ID:', parent);
+        parentIds.push(parent);
       }
     }
+    console.log('[DEBUG] Collected parent IDs:', parentIds);
 
     // Fetch parent User Story titles in batch
     const parentTitleMap = await fetchParentUserStories(parentIds);
+    console.log('[DEBUG] Parent title map:', Object.fromEntries(parentTitleMap));
 
     // Create Bug entries
     for (const bugItem of bugItemsMap.values()) {
@@ -142,9 +157,9 @@ export async function fetchBugs(iterationPath: string): Promise<FetchBugsResult>
       }
 
       // Get parent User Story if available
-      const parent = bugItem.fields['System.Parent'] as { id: number } | undefined;
-      const parentInfo = parent?.id
-        ? { id: parent.id, title: parentTitleMap.get(parent.id) ?? `User Story ${parent.id}` }
+      const parent = bugItem.fields['System.Parent'] as number | undefined;
+      const parentInfo = parent
+        ? { id: parent, title: parentTitleMap.get(parent) ?? `User Story ${parent}` }
         : null;
 
       const bug = mapWorkItemToBug(

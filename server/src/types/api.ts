@@ -99,6 +99,7 @@ export interface Bug {
   parentUserStory: {
     id: number;
     title: string;
+    url: string;
   } | null;
   url: string;
 }
@@ -177,6 +178,14 @@ export function mapWorkItemToBug(
   const createdDateValue = fields['System.CreatedDate'] as string | undefined;
   const changedDateValue = fields['System.ChangedDate'] as string | undefined;
 
+  // Construct parent User Story URL if parent exists
+  const parentUserStoryWithUrl = parentUserStory
+    ? {
+        ...parentUserStory,
+        url: `${orgUrl}/${project}/_workitems/edit/${parentUserStory.id}`,
+      }
+    : null;
+
   return {
     id: item.id,
     title: fields['System.Title'] as string,
@@ -187,7 +196,7 @@ export function mapWorkItemToBug(
     boardColumn: boardColumnValue ?? null,
     createdDate: createdDateValue ?? null,
     changedDate: changedDateValue ?? null,
-    parentUserStory,
+    parentUserStory: parentUserStoryWithUrl,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

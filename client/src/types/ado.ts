@@ -46,6 +46,7 @@ export interface Bug {
   parentUserStory: {
     id: number;
     title: string;
+    url: string;
   } | null;
   url: string;
 }

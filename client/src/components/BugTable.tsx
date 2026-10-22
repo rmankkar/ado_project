@@ -370,13 +370,13 @@ export function BugTable({
                 <td className="font-mono text-sm text-neutral-600">
                   {bug.parentUserStory ? (
                     <a
-                      href={`/${bug.parentUserStory.id}`}
+                      href={bug.parentUserStory.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
                       title={bug.parentUserStory.title}
                     >
-                      #{bug.parentUserStory.id}
+                      {bug.parentUserStory.id}
                     </a>
                   ) : (
                     <span>—</span>
