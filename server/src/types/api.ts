@@ -1,4 +1,4 @@
-import type { AdoWorkItem, AdoWorkItemFields, AdoIdentityRef } from './ado.js';
+import type { AdoWorkItem, AdoWorkItemFields, AdoIdentityRef, AdoWorkItemComment } from './ado.js';
 
 export interface Feature {
   id: number;
@@ -261,6 +261,20 @@ function mapComplexityValue(rawValue: string | undefined): string | null {
   return complexityMap[rawValue] ?? rawValue;
 }
 
+export interface Comment {
+  id: number;
+  text: string;
+  createdBy: string | null;
+  createdDate: string;
+  modifiedBy: string | null;
+  modifiedDate: string;
+}
+
+export interface FetchCommentsResponse {
+  comments: Comment[];
+  errors: FetchError[];
+}
+
 export function mapWorkItemToTestCase(
   item: AdoWorkItem,
   orgUrl: string,
@@ -290,5 +304,19 @@ export function mapWorkItemToTestCase(
     createdBy: createdBy?.displayName ?? null,
     parentUserStories: parentUserStoriesWithUrl,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
+  };
+}
+
+export function mapAdoCommentToComment(comment: AdoWorkItemComment): Comment {
+  const createdBy = comment.createdBy as { displayName?: string } | undefined;
+  const modifiedBy = comment.modifiedBy as { displayName?: string } | undefined;
+
+  return {
+    id: comment.id,
+    text: comment.text ?? '',
+    createdBy: createdBy?.displayName ?? null,
+    createdDate: comment.createdDate,
+    modifiedBy: modifiedBy?.displayName ?? null,
+    modifiedDate: comment.modifiedDate,
   };
 }

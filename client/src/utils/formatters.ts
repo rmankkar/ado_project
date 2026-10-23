@@ -100,3 +100,32 @@ export function getBugAgeLabel(dateString: string | null): { text: string; class
   // 8-12 days
   return { text: `${daysSince} days`, className: 'bg-yellow-100 text-yellow-700' };
 }
+
+/**
+ * Strip HTML tags and decode HTML entities from a string
+ * Returns plain text safe for display
+ */
+export function stripHtml(html: string | null): string {
+  if (!html) return '';
+
+  // Create a temporary DOM element to parse HTML
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  let text = doc.body.textContent || '';
+
+  // Decode common HTML entities
+  text = text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"')
+    .replace(/'/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—')
+    .replace(/&copy;/g, '©')
+    .replace(/&reg;/g, '®');
+
+  // Normalize whitespace
+  return text.replace(/\s+/g, ' ').trim();
+}

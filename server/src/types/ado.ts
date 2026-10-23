@@ -130,3 +130,12 @@ export interface AdoIterationNode {
   children?: AdoIterationNode[];
   url: string;
 }
+
+export interface AdoWorkItemComment {
+  id: number;
+  text: string | null;
+  createdBy: { displayName?: string } | null;
+  createdDate: string;
+  modifiedBy: { displayName?: string } | null;
+  modifiedDate: string;
+}

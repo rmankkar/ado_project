@@ -7,8 +7,9 @@ import type {
   AdoBoard,
   AdoBoardColumn,
   AdoIterationNode,
+  AdoWorkItemComment,
 } from '../types/ado.js';
-import { getWorkItemsUrl, getWorkItemRelationsUrl, getWiqlUrl, getTeamsUrl, getBoardsUrl, getBoardColumnsUrl, getIterationsUrl, getAuthHeader, DEFAULT_FIELDS } from '../utils/adoUrls.js';
+import { getWorkItemsUrl, getWorkItemRelationsUrl, getWiqlUrl, getTeamsUrl, getBoardsUrl, getBoardColumnsUrl, getIterationsUrl, getWorkItemCommentsUrl, getAuthHeader, DEFAULT_FIELDS } from '../utils/adoUrls.js';
 import { chunkArray, MAX_BATCH_SIZE } from '../utils/batching.js';
 
 interface FetchOptions {
@@ -162,6 +163,13 @@ class AdoClient {
     console.log(`Fetched iterations root node from ADO API:`, response.name);
     // The API returns a single root node with children - return the children array
     return response.children ?? [];
+  }
+
+  async getWorkItemComments(id: number): Promise<AdoWorkItemComment[]> {
+    const url = getWorkItemCommentsUrl(id);
+    console.log(`Fetching comments for work item ${id} from ADO API: ${url}`);
+    const response = await this.fetchWithRetry<{ comments: AdoWorkItemComment[] }>(url);
+    return response.comments ?? [];
   }
 }
 

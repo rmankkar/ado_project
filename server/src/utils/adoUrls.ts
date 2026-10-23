@@ -37,6 +37,10 @@ export function getIterationsUrl(depth: number = 3): string {
   return `${env.adoOrgUrl}/${encodeURIComponent(env.adoProject)}/_apis/wit/classificationNodes/Iterations?api-version=${API_VERSION}&$depth=${depth}`;
 }
 
+export function getWorkItemCommentsUrl(id: number): string {
+  return `${env.adoOrgUrl}/${encodeURIComponent(env.adoProject)}/_apis/wit/workitems/${id}/comments?api-version=${API_VERSION}-preview`;
+}
+
 export function getAuthHeader(): string {
   const token = Buffer.from(`:${env.adoPat}`).toString('base64');
   return `Basic ${token}`;

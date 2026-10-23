@@ -137,10 +137,24 @@ export interface FetchTestCasesResponse {
   errors: FetchError[];
 }
 
-export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy';
+export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy' | 'goLive';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {
   field: SortField;
   direction: SortDirection;
+}
+
+export interface Comment {
+  id: number;
+  text: string;
+  createdBy: string | null;
+  createdDate: string;
+  modifiedBy: string | null;
+  modifiedDate: string;
+}
+
+export interface FetchCommentsResponse {
+  comments: Comment[];
+  errors: FetchError[];
 }

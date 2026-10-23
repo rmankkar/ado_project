@@ -8,6 +8,7 @@ import type {
   TestCase,
   ChildUserStory,
   FetchError,
+  FetchCommentsResponse,
 } from '../types/ado.js';
 
 const API_BASE = '/api';
@@ -75,6 +76,10 @@ export const adoApi = {
       method: 'POST',
       body: JSON.stringify({ iterationPath }),
     });
+  },
+
+  async fetchComments(workItemId: number): Promise<FetchCommentsResponse> {
+    return fetchJson<FetchCommentsResponse>(`${API_BASE}/comments/${workItemId}`);
   },
 };
 

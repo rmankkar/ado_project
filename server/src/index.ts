@@ -12,6 +12,7 @@ import iterationsRouter from './routes/iterations.js';
 import bugsRouter from './routes/bugs.js';
 import testCasesRouter from './routes/testCases.js';
 import qaAssignmentsRouter from './routes/qaAssignments.js';
+import commentsRouter from './routes/comments.js';
 
 validateEnv();
 
@@ -51,6 +52,7 @@ app.use('/api/iterations', iterationsRouter);
 app.use('/api/bugs', bugsRouter);
 app.use('/api/test-cases', testCasesRouter);
 app.use('/api/qa-assignments', qaAssignmentsRouter);
+app.use('/api/comments', commentsRouter);
 
 // 404 handler
 app.use(notFoundHandler);

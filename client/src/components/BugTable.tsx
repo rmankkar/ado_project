@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import type { Bug, SortField, SortDirection } from '../types/ado.js';
+import type { Bug, SortField, SortDirection, Comment, FetchCommentsResponse } from '../types/ado.js';
 import { getStatusBadgeClass, formatDate, getBugAgeLabel } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
+import { CommentModal } from './CommentModal.js';
+import { useFetchComments } from '../hooks/useComments.js';
 
 interface BugTableProps {
   bugs: Bug[];
@@ -35,6 +37,37 @@ export function BugTable({
     severity: '',
     searchText: '',
   });
+
+  // Modal state for comments
+  const [selectedBug, setSelectedBug] = useState<{ id: number; title: string } | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+
+  // Fetch comments mutation
+  const fetchCommentsMutation = useFetchComments({
+    onSuccess: (data: FetchCommentsResponse) => {
+      setComments(data.comments);
+      setIsLoadingComments(false);
+    },
+    onError: (error: Error) => {
+      console.error('Failed to fetch comments:', error);
+      setComments([]);
+      setIsLoadingComments(false);
+    },
+  });
+
+  const handleOpenComments = (bug: Bug) => {
+    setSelectedBug({ id: bug.id, title: bug.title });
+    setComments([]);
+    setIsLoadingComments(true);
+    fetchCommentsMutation.mutate(bug.id);
+  };
+
+  const handleCloseComments = () => {
+    setSelectedBug(null);
+    setComments([]);
+    fetchCommentsMutation.reset();
+  };
 
   // Get unique values for filter dropdowns
   const uniqueStatuses = useMemo((): string[] =>
@@ -166,6 +199,7 @@ export function BugTable({
               <th>Go Live</th>
               <th>Created</th>
               <th>Parent User Story</th>
+              <th>Comments</th>
             </tr>
           </thead>
           <tbody>
@@ -180,6 +214,7 @@ export function BugTable({
                 <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-12 animate-pulse" /></td>
               </tr>
             ))}
           </tbody>
@@ -198,7 +233,8 @@ export function BugTable({
   }
 
   return (
-    <div className="mb-6">
+    <>
+      <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-neutral-900">
           Open Bugs ({filteredAndSortedBugs.length} of {bugs.length})
@@ -339,12 +375,17 @@ export function BugTable({
                   {getSortIcon('parentUserStory') && <span className="text-neutral-400">{getSortIcon('parentUserStory')}</span>}
                 </div>
               </th>
+              <th scope="col">
+                <div className="flex items-center gap-1">
+                  Comments
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
             {filteredAndSortedBugs.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-8 text-neutral-500">
+                <td colSpan={10} className="text-center py-8 text-neutral-500">
                   No open bugs found for the selected iteration. This could mean there are no bugs linked to User Stories in this iteration.
                 </td>
               </tr>
@@ -404,11 +445,31 @@ export function BugTable({
                     <span>—</span>
                   )}
                 </td>
+                <td className="text-center">
+                  <button
+                    onClick={() => handleOpenComments(bug)}
+                    className="text-2xl hover:text-primary-600 transition-colors p-1"
+                    aria-label={`View comments for bug ${bug.id}`}
+                    title="View comments"
+                  >
+                    💬
+                  </button>
+                </td>
               </tr>
             )))}
           </tbody>
         </table>
       </div>
     </div>
+
+      <CommentModal
+        isOpen={selectedBug !== null}
+        onClose={handleCloseComments}
+        bugId={selectedBug?.id ?? 0}
+        bugTitle={selectedBug?.title ?? ''}
+        comments={comments}
+        isLoading={isLoadingComments}
+      />
+    </>
   );
 }
