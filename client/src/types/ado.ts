@@ -7,6 +7,24 @@ export interface Feature {
   url: string;
 }
 
+export interface Bug {
+  id: number;
+  title: string;
+  status: string;
+  assignedTo: string | null;
+  severity: string | null;
+  priority: number | null;
+  boardColumn: string | null;
+  createdDate: string | null;
+  changedDate: string | null;
+  parentUserStory: {
+    id: number;
+    title: string;
+    url: string;
+  } | null;
+  url: string;
+}
+
 export interface ChildUserStory {
   id: number;
   title: string;
@@ -21,6 +39,7 @@ export interface ChildUserStory {
     url: string;
   };
   url: string;
+  bugs?: Bug[];
 }
 
 export interface Iteration {

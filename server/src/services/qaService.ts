@@ -1,13 +1,13 @@
 import { adoClient } from './adoClient.js';
 import { getFieldMappings } from './fieldMapping.js';
-import { mapWorkItemToChildStory } from '../types/api.js';
+import { mapWorkItemToChildStory, mapWorkItemToBug } from '../types/api.js';
 import { DEFAULT_FIELDS } from '../utils/adoUrls.js';
 import { env } from '../config/env.js';
-import type { ChildUserStory, FetchError } from '../types/api.js';
+import type { FetchError, Bug, QaUserStoryWithBugs } from '../types/api.js';
 import type { AdoWorkItem } from '../types/ado.js';
 
 export interface FetchQaUserStoriesResult {
-  userStories: ChildUserStory[];
+  userStories: QaUserStoryWithBugs[];
   errors: FetchError[];
 }
 
@@ -45,6 +45,9 @@ async function fetchWorkItemsByIds(ids: number[]): Promise<Map<number, AdoWorkIt
   return itemMap;
 }
 
+const WORK_ITEM_TYPE_BUG = 'Bug';
+const HIERARCHY_LINK_TYPE = 'System.LinkTypes.Hierarchy-Forward';
+
 function buildQaUserStoriesQuery(iterationPath: string): string {
   const escapedIterationPath = iterationPath.replace(/'/g, "''");
   const escapedAreaPath = 'Global_Data_Project\\B2B\\B2B Blackhawks'.replace(/'/g, "''");
@@ -76,8 +79,25 @@ function buildQaUserStoriesQuery(iterationPath: string): string {
   `;
 }
 
+function buildBugsQuery(userStoryIds: number[]): string {
+  if (userStoryIds.length === 0) return '';
+  const ids = userStoryIds.join(',');
+  return `
+    SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType],
+           [System.AssignedTo], [System.TeamProject], [System.BoardColumn],
+           [System.CreatedDate], [System.ChangedDate],
+           [Microsoft.VSTS.Common.Severity], [Microsoft.VSTS.Common.Priority]
+    FROM WorkItemLinks
+    WHERE [Source].[System.Id] IN (${ids})
+      AND [System.Links.LinkType] = '${HIERARCHY_LINK_TYPE}'
+      AND [Target].[System.WorkItemType] = '${WORK_ITEM_TYPE_BUG}'
+      AND [Target].[System.State] NOT IN ('Closed', 'Removed')
+    ORDER BY [Target].[System.Id]
+  `;
+}
+
 export async function fetchQaUserStories(iterationPath: string): Promise<FetchQaUserStoriesResult> {
-  const userStories: ChildUserStory[] = [];
+  const userStories: QaUserStoryWithBugs[] = [];
   const errors: FetchError[] = [];
 
   if (!iterationPath) {
@@ -125,7 +145,74 @@ export async function fetchQaUserStories(iterationPath: string): Promise<FetchQa
     }
     console.log('[DEBUG] Parent Feature map:', Object.fromEntries(parentFeatureMap));
 
-    // Create User Story entries
+    // Fetch Bugs for User Stories using WIQL work item relations
+    const bugsQuery = buildBugsQuery(userStoryIds);
+    console.log('[DEBUG] Bugs WIQL Query:', bugsQuery);
+    const bugsWiqlResult = await adoClient.runWiql(bugsQuery);
+    console.log('[DEBUG] Bugs WIQL Result workItemRelations count:', bugsWiqlResult.workItemRelations.length);
+
+    // Build a map of User Story ID -> Bug IDs from the relations
+    const userStoryToBugIds = new Map<number, number[]>();
+    const bugIdsSet = new Set<number>();
+
+    for (const relation of bugsWiqlResult.workItemRelations) {
+      if (!relation.source || !relation.target) {
+        continue;
+      }
+      const userStoryId = relation.source.id;
+      const bugId = relation.target.id;
+
+      if (!userStoryId || !bugId) continue;
+
+      bugIdsSet.add(bugId);
+      if (!userStoryToBugIds.has(userStoryId)) {
+        userStoryToBugIds.set(userStoryId, []);
+      }
+      userStoryToBugIds.get(userStoryId)!.push(bugId);
+    }
+
+    const bugIds = [...bugIdsSet];
+    console.log('[DEBUG] Bug IDs from WIQL relations:', bugIds);
+    console.log('[DEBUG] User Story to Bug mapping:', Object.fromEntries(userStoryToBugIds));
+
+    // Fetch full bug work item details
+    const bugItemsMap = await fetchWorkItemsByIds(bugIds);
+    console.log('[DEBUG] Bug items fetched:', bugItemsMap.size);
+
+    // Map bugs to Bug type, grouped by parent User Story
+    const userStoryBugsMap = new Map<number, Bug[]>();
+    for (const [userStoryId, bugIdsForStory] of userStoryToBugIds) {
+      const bugs: Bug[] = [];
+      for (const bugId of bugIdsForStory) {
+        const bugItem = bugItemsMap.get(bugId);
+        if (!bugItem) continue;
+
+        const workItemType = bugItem.fields['System.WorkItemType'] as string;
+        if (workItemType !== WORK_ITEM_TYPE_BUG) continue;
+
+        const bugStatus = bugItem.fields['System.State'] as string;
+        if (CLOSED_STATUSES.some(s => s.toLowerCase() === bugStatus.toLowerCase())) {
+          continue;
+        }
+
+        // Create parent User Story info for the bug
+        const parentUserStoryInfo = { id: userStoryId, title: '' };
+
+        const bug = mapWorkItemToBug(
+          bugItem,
+          process.env.ADO_ORG_URL ?? '',
+          parentUserStoryInfo,
+          getFieldMappings()
+        );
+        bugs.push(bug);
+      }
+      if (bugs.length > 0) {
+        userStoryBugsMap.set(userStoryId, bugs);
+      }
+    }
+    console.log('[DEBUG] User Story Bugs map:', Object.fromEntries(userStoryBugsMap));
+
+    // Create User Story entries with bugs
     for (const userStoryItem of userStoryItemsMap.values()) {
       const workItemType = userStoryItem.fields['System.WorkItemType'] as string;
       if (workItemType !== WORK_ITEM_TYPE_USER_STORY) {
@@ -149,7 +236,13 @@ export async function fetchQaUserStories(iterationPath: string): Promise<FetchQa
         parentFeature,
         getFieldMappings()
       );
-      userStories.push(userStory);
+
+      // Add bugs for this user story
+      const userStoryWithBugs: QaUserStoryWithBugs = {
+        ...userStory,
+        bugs: userStoryBugsMap.get(userStory.id) ?? [],
+      };
+      userStories.push(userStoryWithBugs);
     }
   } catch (error) {
     const status = (error as Error & { status?: number }).status;

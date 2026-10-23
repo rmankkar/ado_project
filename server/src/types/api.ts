@@ -148,8 +148,12 @@ export interface FetchQaUserStoriesRequest {
   iterationPath: string;
 }
 
+export interface QaUserStoryWithBugs extends ChildUserStory {
+  bugs: Bug[];
+}
+
 export interface FetchQaUserStoriesResponse {
-  userStories: ChildUserStory[];
+  userStories: QaUserStoryWithBugs[];
   errors: FetchError[];
 }
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { ChildUserStory, SortField, SortDirection } from '../types/ado.js';
+import type { ChildUserStory, SortField, SortDirection, Bug } from '../types/ado.js';
 import { getStatusBadgeClass, formatDate, isDateInPast } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
@@ -35,6 +35,7 @@ export function QAAssignmentsTable({
     parentFeature: '',
     searchText: '',
   });
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   // Get unique values for filter dropdowns
   const uniqueStatuses = useMemo((): string[] =>
@@ -146,6 +147,67 @@ export function QAAssignmentsTable({
   };
 
   const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.parentFeature || filters.searchText;
+
+  const toggleExpand = (storyId: number) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(storyId)) {
+        next.delete(storyId);
+      } else {
+        next.add(storyId);
+      }
+      return next;
+    });
+  };
+
+  const renderBugRows = (bugs: Bug[]) => {
+    if (bugs.length === 0) {
+      return [
+        <tr key="no-bugs" className="bg-neutral-50">
+          <td colSpan={8} className="px-4 py-3 text-center text-neutral-500 text-sm">
+            No active bugs linked to this User Story
+          </td>
+        </tr>
+      ];
+    }
+
+    return bugs.map(bug => (
+      <tr key={bug.id} className="bg-neutral-50 border-t border-neutral-100">
+        <td className="px-4 py-2 text-neutral-400"></td>
+        <td className="px-4 py-2 font-mono text-sm text-primary-600">
+          <a
+            href={bug.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+          >
+            #{bug.id}
+          </a>
+        </td>
+        <td className="px-4 py-2 max-w-md whitespace-normal break-words text-sm" title={bug.title}>
+          {bug.title}
+        </td>
+        <td className="px-4 py-2">
+          <span className={getStatusBadgeClass(bug.status)}>
+            {bug.status}
+          </span>
+        </td>
+        <td className="px-4 py-2 text-sm text-neutral-600">
+          {bug.severity ?? '—'}
+        </td>
+        <td className="px-4 py-2 text-sm text-neutral-600">
+          {bug.priority ?? '—'}
+        </td>
+        <td className="px-4 py-2 text-sm text-neutral-600">
+          {bug.boardColumn ?? '—'}
+        </td>
+        <td className="px-4 py-2 text-sm text-neutral-600">
+          {bug.assignedTo ?? '—'}
+        </td>
+        <td className="px-4 py-2 text-sm text-neutral-600"></td>
+      </tr>
+    ));
+  };
 
   if (isLoading) {
     return (
@@ -337,51 +399,89 @@ export function QAAssignmentsTable({
                 </td>
               </tr>
             ) : (
-              filteredAndSortedStories.map(story => (
-              <tr key={`${story.id}-${story.parentFeature.id}`}>
-                <td className="font-mono font-medium">
-                  <a
-                    href={story.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
-                  >
-                    {story.id}
-                  </a>
-                </td>
-                <td className="max-w-md whitespace-normal break-words" title={story.title}>
-                  {story.title}
-                </td>
-                <td>
-                  <span className={getStatusBadgeClass(story.status)}>
-                    {story.status}
-                  </span>
-                </td>
-                <td className="text-neutral-600">
-                  {story.assignedTo ?? '—'}
-                </td>
-                <td className="text-neutral-600">
-                  {story.boardColumn ?? '—'}
-                </td>
-                <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.deployDate) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.deployDate) ? 600 : 400 }}>
-                  {formatDate(story.deployDate)}
-                </td>
-                <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.targetDate) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.targetDate) ? 600 : 400 }}>
-                  {formatDate(story.targetDate)}
-                </td>
-                <td className="font-mono text-sm text-neutral-600">
-                  <a
-                    href={story.parentFeature.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
-                    title={story.parentFeature.title}
-                  >
-                    {story.parentFeature.id}
-                  </a>
-                </td>
-              </tr>
-            )))}
+              filteredAndSortedStories.flatMap(story => {
+                const isExpanded = expandedRows.has(story.id);
+                const hasBugs = story.bugs && story.bugs.length > 0;
+
+                const rows: React.ReactNode[] = [
+                  // Main User Story row
+                  <tr key={`${story.id}-${story.parentFeature.id}`}>
+                    <td className="font-mono font-medium">
+                      <a
+                        href={story.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+                      >
+                        {story.id}
+                      </a>
+                    </td>
+                    <td className="max-w-md whitespace-normal break-words" title={story.title}>
+                      <div className="flex items-center gap-2">
+                        {hasBugs && (
+                          <button
+                            onClick={() => toggleExpand(story.id)}
+                            className="flex items-center justify-center w-6 h-6 text-neutral-400 hover:text-neutral-600 transition-colors"
+                            aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                            aria-expanded={isExpanded}
+                          >
+                            <svg
+                              className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        )}
+                        <span>{story.title}</span>
+                        {hasBugs && (
+                          <span className="text-xs text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded">
+                            {story.bugs!.length} bug{story.bugs!.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={getStatusBadgeClass(story.status)}>
+                        {story.status}
+                      </span>
+                    </td>
+                    <td className="text-neutral-600">
+                      {story.assignedTo ?? '—'}
+                    </td>
+                    <td className="text-neutral-600">
+                      {story.boardColumn ?? '—'}
+                    </td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.deployDate) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.deployDate) ? 600 : 400 }}>
+                      {formatDate(story.deployDate)}
+                    </td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.targetDate) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.targetDate) ? 600 : 400 }}>
+                      {formatDate(story.targetDate)}
+                    </td>
+                    <td className="font-mono text-sm text-neutral-600">
+                      <a
+                        href={story.parentFeature.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+                        title={story.parentFeature.title}
+                      >
+                        {story.parentFeature.id}
+                      </a>
+                    </td>
+                  </tr>,
+                ];
+
+                // Add expanded bug rows if expanded and has bugs
+                if (isExpanded && hasBugs) {
+                  rows.push(...renderBugRows(story.bugs!));
+                }
+
+                return rows;
+              })
+            )}
           </tbody>
         </table>
       </div>
