@@ -11,6 +11,7 @@ import healthRouter from './routes/health.js';
 import iterationsRouter from './routes/iterations.js';
 import bugsRouter from './routes/bugs.js';
 import testCasesRouter from './routes/testCases.js';
+import qaAssignmentsRouter from './routes/qaAssignments.js';
 
 validateEnv();
 
@@ -49,6 +50,7 @@ app.use('/api/field-mappings', fieldMappingsRouter);
 app.use('/api/iterations', iterationsRouter);
 app.use('/api/bugs', bugsRouter);
 app.use('/api/test-cases', testCasesRouter);
+app.use('/api/qa-assignments', qaAssignmentsRouter);
 
 // 404 handler
 app.use(notFoundHandler);

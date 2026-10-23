@@ -144,6 +144,15 @@ export interface FetchTestCasesResponse {
   errors: FetchError[];
 }
 
+export interface FetchQaUserStoriesRequest {
+  iterationPath: string;
+}
+
+export interface FetchQaUserStoriesResponse {
+  userStories: ChildUserStory[];
+  errors: FetchError[];
+}
+
 export function mapWorkItemToChildStory(
   item: AdoWorkItem,
   orgUrl: string,

@@ -6,6 +6,7 @@ import type {
   Iteration,
   Bug,
   TestCase,
+  ChildUserStory,
   FetchError,
 } from '../types/ado.js';
 
@@ -64,6 +65,13 @@ export const adoApi = {
 
   async fetchTestCases(iterationPath: string): Promise<{ testCases: TestCase[]; errors: FetchError[] }> {
     return fetchJson<{ testCases: TestCase[]; errors: FetchError[] }>(`${API_BASE}/test-cases`, {
+      method: 'POST',
+      body: JSON.stringify({ iterationPath }),
+    });
+  },
+
+  async fetchQaUserStories(iterationPath: string): Promise<{ userStories: ChildUserStory[]; errors: FetchError[] }> {
+    return fetchJson<{ userStories: ChildUserStory[]; errors: FetchError[] }>(`${API_BASE}/qa-assignments/qa-user-stories`, {
       method: 'POST',
       body: JSON.stringify({ iterationPath }),
     });

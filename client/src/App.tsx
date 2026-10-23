@@ -8,12 +8,13 @@ import { ChildStoryTable } from './components/ChildStoryTable.js';
 import { ReportDashboard } from './components/ReportDashboard.js';
 import { IterationBugsTab } from './components/IterationBugsTab.js';
 import { TestCaseReviewTab } from './components/TestCaseReviewTab.js';
+import { QAAssignmentsTab } from './components/QAAssignmentsTab.js';
 import { Tabs } from './components/Tabs.js';
 import { LoadingOverlay } from './components/LoadingSpinner.js';
 import type { SortField, SortDirection } from './types/ado.js';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'features' | 'bugs' | 'testcases'>('features');
+  const [activeTab, setActiveTab] = useState<'features' | 'bugs' | 'testcases' | 'qaassignments'>('features');
   const [view, setView] = useState<'tables' | 'report'>('tables');
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<number>>(new Set());
   const [sortState, setSortState] = useState<{ field: SortField; direction: SortDirection }>({ field: 'id', direction: 'asc' });
@@ -87,6 +88,7 @@ function App() {
     { id: 'features', label: 'Features & User Stories' },
     { id: 'bugs', label: 'Iteration Bugs' },
     { id: 'testcases', label: 'Test Case Review' },
+    { id: 'qaassignments', label: 'QA Assignments' },
   ];
 
   const allErrors = [...fetchErrors, ...childStoryErrors];
@@ -96,7 +98,7 @@ function App() {
       <Header />
 
       {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={(tabId) => setActiveTab(tabId as 'features' | 'bugs' | 'testcases')} />
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={(tabId) => setActiveTab(tabId as 'features' | 'bugs' | 'testcases' | 'qaassignments')} />
 
       <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {allErrors.length > 0 && activeTab === 'features' && (
@@ -158,8 +160,10 @@ function App() {
           </>
         ) : activeTab === 'bugs' ? (
           <IterationBugsTab />
-        ) : (
+        ) : activeTab === 'testcases' ? (
           <TestCaseReviewTab />
+        ) : (
+          <QAAssignmentsTab />
         )}
       </main>
 

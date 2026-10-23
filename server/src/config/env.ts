@@ -13,6 +13,7 @@ interface EnvConfig {
   port: number;
   nodeEnv: string;
   corsOrigin: string;
+  qaTeamEmails: string[];
 }
 
 function getRequiredEnv(key: string): string {
@@ -39,6 +40,10 @@ export const env: EnvConfig = {
   port: parseInt(getOptionalEnv('PORT', '3001'), 10),
   nodeEnv: getOptionalEnv('NODE_ENV', 'development'),
   corsOrigin: getOptionalEnv('CORS_ORIGIN', 'http://localhost:5173'),
+  qaTeamEmails: (process.env.QA_TEAM_EMAILS ?? '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(e => e.length > 0),
 };
 
 export function validateEnv(): void {
