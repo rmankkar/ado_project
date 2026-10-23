@@ -37,23 +37,19 @@ export function QAAssignmentsTab() {
     }));
   };
 
-  // Compute user story status counts for the pie chart (excluding Closed/Removed)
-  const userStoryStatusCounts = useMemo((): StatusCount[] => {
-    const statusMap = new Map<string, number>();
+  // Compute total open child bugs across all user stories
+  const totalChildBugs = useMemo(() => {
+    let count = 0;
     for (const us of userStories) {
-      const status = us.status.toLowerCase();
-      if (status === 'closed' || status === 'removed') continue;
-      statusMap.set(us.status, (statusMap.get(us.status) ?? 0) + 1);
+      if (us.bugs && us.bugs.length > 0) {
+        count += us.bugs.filter(bug => {
+          const s = bug.status.toLowerCase();
+          return s !== 'closed' && s !== 'removed';
+        }).length;
+      }
     }
-    return Array.from(statusMap.entries())
-      .map(([status, count]) => ({ status, count }))
-      .sort((a, b) => b.count - a.count);
+    return count;
   }, [userStories]);
-
-  const totalQaUserStories = userStories.filter(us => {
-    const s = us.status.toLowerCase();
-    return s !== 'closed' && s !== 'removed';
-  }).length;
 
   // Compute unique Parent Feature count
   const uniqueParentFeatureCount = useMemo(() => {
@@ -64,6 +60,31 @@ export function QAAssignmentsTab() {
       }
     }
     return featureIds.size;
+  }, [userStories]);
+
+  // Compute total QA user stories (excluding Closed/Removed)
+  const totalQaUserStories = useMemo(() => {
+    return userStories.filter(us => {
+      const s = us.status.toLowerCase();
+      return s !== 'closed' && s !== 'removed';
+    }).length;
+  }, [userStories]);
+
+  // Compute child bug status counts for the pie chart (excluding Closed/Removed)
+  const childBugStatusCounts = useMemo((): StatusCount[] => {
+    const statusMap = new Map<string, number>();
+    for (const us of userStories) {
+      if (us.bugs) {
+        for (const bug of us.bugs) {
+          const status = bug.status.toLowerCase();
+          if (status === 'closed' || status === 'removed') continue;
+          statusMap.set(bug.status, (statusMap.get(bug.status) ?? 0) + 1);
+        }
+      }
+    }
+    return Array.from(statusMap.entries())
+      .map(([status, count]) => ({ status, count }))
+      .sort((a, b) => b.count - a.count);
   }, [userStories]);
 
   // Compute board column counts for the pie chart
@@ -199,6 +220,10 @@ export function QAAssignmentsTab() {
                 <div className="text-2xl font-bold text-green-700">{uniqueParentFeatureCount}</div>
                 <div className="text-sm text-green-600">Unique Parent Features</div>
               </div>
+              <div className="p-3 bg-red-50 rounded-lg">
+                <div className="text-2xl font-bold text-red-700">{totalChildBugs}</div>
+                <div className="text-sm text-red-600">Open Child Bugs</div>
+              </div>
             </div>
             <div className="flex items-center gap-4 text-sm text-neutral-600">
               <span className="px-3 py-1 bg-neutral-100 rounded">
@@ -212,12 +237,12 @@ export function QAAssignmentsTab() {
       {/* Pie Charts - 3 Columns */}
       {selectedIterationPath && (totalQaUserStories > 0 || userStories.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* User Story Status Pie Chart */}
+          {/* Child Bug Status Pie Chart */}
           <div className="card p-6">
             <StatusPieChart
-              title="User Story Status Distribution (Closed/Removed excluded)"
-              data={userStoryStatusCounts}
-              total={totalQaUserStories}
+              title="Child Bug Status Distribution (Closed/Removed excluded)"
+              data={childBugStatusCounts}
+              total={totalChildBugs}
               height={280}
             />
           </div>

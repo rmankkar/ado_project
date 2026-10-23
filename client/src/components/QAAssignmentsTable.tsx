@@ -163,7 +163,7 @@ export function QAAssignmentsTable({
   const renderBugRows = (bugs: Bug[]) => {
     if (bugs.length === 0) {
       return [
-        <tr key="no-bugs" className="bg-neutral-50">
+        <tr key="no-bugs" className="bg-neutral-100">
           <td colSpan={8} className="px-4 py-3 text-center text-neutral-500 text-sm">
             No active bugs linked to this User Story
           </td>
@@ -172,8 +172,7 @@ export function QAAssignmentsTable({
     }
 
     return bugs.map(bug => (
-      <tr key={bug.id} className="bg-neutral-50 border-t border-neutral-100">
-        <td className="px-4 py-2 text-neutral-400"></td>
+      <tr key={bug.id} className="bg-neutral-100 border-t border-neutral-200">
         <td className="px-4 py-2 font-mono text-sm text-primary-600">
           <a
             href={bug.url}
@@ -181,7 +180,7 @@ export function QAAssignmentsTable({
             rel="noopener noreferrer"
             className="text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
           >
-            #{bug.id}
+            {bug.id}
           </a>
         </td>
         <td className="px-4 py-2 max-w-md whitespace-normal break-words text-sm" title={bug.title}>
@@ -193,17 +192,13 @@ export function QAAssignmentsTable({
           </span>
         </td>
         <td className="px-4 py-2 text-sm text-neutral-600">
-          {bug.severity ?? '—'}
-        </td>
-        <td className="px-4 py-2 text-sm text-neutral-600">
-          {bug.priority ?? '—'}
+          {bug.assignedTo ?? '—'}
         </td>
         <td className="px-4 py-2 text-sm text-neutral-600">
           {bug.boardColumn ?? '—'}
         </td>
-        <td className="px-4 py-2 text-sm text-neutral-600">
-          {bug.assignedTo ?? '—'}
-        </td>
+        <td className="px-4 py-2 text-sm text-neutral-600"></td>
+        <td className="px-4 py-2 text-sm text-neutral-600"></td>
         <td className="px-4 py-2 text-sm text-neutral-600"></td>
       </tr>
     ));
