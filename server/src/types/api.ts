@@ -95,6 +95,7 @@ export interface Bug {
   severity: string | null;
   priority: number | null;
   boardColumn: string | null;
+  goLive: string | null;
   createdDate: string | null;
   changedDate: string | null;
   parentUserStory: {
@@ -211,13 +212,14 @@ export function mapWorkItemToBug(
   item: AdoWorkItem,
   orgUrl: string,
   parentUserStory: { id: number; title: string } | null,
-  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string }
+  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string; goLive: string }
 ): Bug {
   const fields = item.fields as AdoWorkItemFields;
   const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
   const project = fields['System.TeamProject'] as string;
 
   const boardColumnValue = fields[fieldMappings.boardColumn] as string | undefined;
+  const goLiveValue = fields[fieldMappings.goLive] as string | undefined;
   const severityValue = fields['Microsoft.VSTS.Common.Severity'] as string | undefined;
   const priorityValue = fields['Microsoft.VSTS.Common.Priority'] as number | undefined;
   const createdDateValue = fields['System.CreatedDate'] as string | undefined;
@@ -239,6 +241,7 @@ export function mapWorkItemToBug(
     severity: severityValue ?? null,
     priority: priorityValue ?? null,
     boardColumn: boardColumnValue ?? null,
+    goLive: goLiveValue ?? null,
     createdDate: createdDateValue ?? null,
     changedDate: changedDateValue ?? null,
     parentUserStory: parentUserStoryWithUrl,

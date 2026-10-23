@@ -24,7 +24,7 @@ function buildDirectBugsQuery(iterationPath: string): string {
     SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType], [System.AssignedTo],
            [System.TeamProject], [System.BoardColumn], [System.CreatedDate], [System.ChangedDate],
            [Microsoft.VSTS.Common.Severity], [Microsoft.VSTS.Common.Priority],
-           [System.Parent]
+           [System.Parent], [Custom.GoLive]
     FROM WorkItems
     WHERE [System.IterationPath] UNDER '${escapedIteraionPath}'
       AND [System.areaPath] UNDER '${escapedAreaPath}'
@@ -51,6 +51,7 @@ async function fetchWorkItemsByIds(ids: number[]): Promise<Map<number, AdoWorkIt
   const fields = [
     ...DEFAULT_FIELDS,
     getFieldMappings().boardColumn,
+    getFieldMappings().goLive,
     'Microsoft.VSTS.Common.Severity',
     'Microsoft.VSTS.Common.Priority',
     'System.CreatedDate',

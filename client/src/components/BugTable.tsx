@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Bug, SortField, SortDirection } from '../types/ado.js';
-import { getStatusBadgeClass, formatDate } from '../utils/formatters.js';
+import { getStatusBadgeClass, formatDate, getBugAgeLabel } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
 
@@ -15,7 +15,7 @@ interface BugTableProps {
 interface FilterState {
   status: string;
   assignedTo: string;
-  boardColumn: string;
+  goLive: string;
   severity: string;
   searchText: string;
 }
@@ -31,7 +31,7 @@ export function BugTable({
   const [filters, setFilters] = useState<FilterState>({
     status: '',
     assignedTo: '',
-    boardColumn: '',
+    goLive: '',
     severity: '',
     searchText: '',
   });
@@ -45,8 +45,8 @@ export function BugTable({
     [...new Set(bugs.map(s => s.assignedTo).filter((v): v is string => v !== null))].sort(),
     [bugs]
   );
-  const uniqueBoardColumns = useMemo((): string[] =>
-    [...new Set(bugs.map(s => s.boardColumn).filter((v): v is string => v !== null))].sort(),
+  const uniqueGoLive = useMemo((): string[] =>
+    [...new Set(bugs.map(s => s.goLive).filter((v): v is string => v !== null))].sort(),
     [bugs]
   );
   const uniqueSeverities = useMemo((): string[] =>
@@ -65,8 +65,8 @@ export function BugTable({
     if (filters.assignedTo) {
       result = result.filter(s => s.assignedTo === filters.assignedTo);
     }
-    if (filters.boardColumn) {
-      result = result.filter(s => s.boardColumn === filters.boardColumn);
+    if (filters.goLive) {
+      result = result.filter(s => s.goLive === filters.goLive);
     }
     if (filters.severity) {
       result = result.filter(s => s.severity === filters.severity);
@@ -100,9 +100,9 @@ export function BugTable({
           aVal = (a.assignedTo ?? '').toLowerCase();
           bVal = (b.assignedTo ?? '').toLowerCase();
           break;
-        case 'boardColumn':
-          aVal = (a.boardColumn ?? '').toLowerCase();
-          bVal = (b.boardColumn ?? '').toLowerCase();
+        case 'goLive':
+          aVal = (a.goLive ?? '').toLowerCase();
+          bVal = (b.goLive ?? '').toLowerCase();
           break;
         case 'severity':
           aVal = (a.severity ?? '').toLowerCase();
@@ -146,10 +146,10 @@ export function BugTable({
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', boardColumn: '', severity: '', searchText: '' });
+    setFilters({ status: '', assignedTo: '', goLive: '', severity: '', searchText: '' });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.severity || filters.searchText;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.goLive || filters.severity || filters.searchText;
 
   if (isLoading) {
     return (
@@ -163,7 +163,7 @@ export function BugTable({
               <th>Severity</th>
               <th>Priority</th>
               <th>Assigned To</th>
-              <th>Board Column</th>
+              <th>Go Live</th>
               <th>Created</th>
               <th>Parent User Story</th>
             </tr>
@@ -258,15 +258,15 @@ export function BugTable({
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-neutral-700">Board Column:</label>
+            <label className="text-sm font-medium text-neutral-700">Go Live:</label>
             <select
-              value={filters.boardColumn}
-              onChange={(e) => handleFilterChange('boardColumn', e.target.value)}
+              value={filters.goLive}
+              onChange={(e) => handleFilterChange('goLive', e.target.value)}
               className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500"
             >
               <option value="">All</option>
-              {uniqueBoardColumns.map(column => (
-                <option key={column} value={column}>{column}</option>
+              {uniqueGoLive.map(goLive => (
+                <option key={goLive} value={goLive}>{goLive}</option>
               ))}
             </select>
           </div>
@@ -321,10 +321,10 @@ export function BugTable({
                   {getSortIcon('assignedTo') && <span className="text-neutral-400">{getSortIcon('assignedTo')}</span>}
                 </div>
               </th>
-              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('boardColumn')}>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('goLive')}>
                 <div className="flex items-center gap-1">
-                  Board Column
-                  {getSortIcon('boardColumn') && <span className="text-neutral-400">{getSortIcon('boardColumn')}</span>}
+                  Go Live
+                  {getSortIcon('goLive') && <span className="text-neutral-400">{getSortIcon('goLive')}</span>}
                 </div>
               </th>
               <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('createdDate')}>
@@ -379,10 +379,15 @@ export function BugTable({
                   {bug.assignedTo ?? '—'}
                 </td>
                 <td className="text-neutral-600">
-                  {bug.boardColumn ?? '—'}
+                  {bug.goLive ?? '—'}
                 </td>
                 <td className="font-mono text-sm text-neutral-600">
-                  {formatDate(bug.createdDate)}
+                  <div>{formatDate(bug.createdDate)}</div>
+                  {getBugAgeLabel(bug.createdDate) && (
+                    <span className={`inline-block mt-1 px-1.5 py-0.5 text-xs font-medium rounded ${getBugAgeLabel(bug.createdDate)!.className}`}>
+                      {getBugAgeLabel(bug.createdDate)!.text}
+                    </span>
+                  )}
                 </td>
                 <td className="font-mono text-sm text-neutral-600">
                   {bug.parentUserStory ? (

@@ -8,6 +8,7 @@ interface EnvConfig {
   adoFieldBoardColumn: string;
   adoFieldDeployDate: string;
   adoFieldTargetDate: string;
+  adoFieldGoLive: string;
   adoLinkType: string;
   adoIterationBasePath: string | undefined;
   port: number;
@@ -35,6 +36,7 @@ export const env: EnvConfig = {
   adoFieldBoardColumn: getOptionalEnv('ADO_FIELD_BOARD_COLUMN', 'System.BoardColumn'),
   adoFieldDeployDate: getOptionalEnv('ADO_FIELD_DEPLOY_DATE', 'Custom.DeployDate'),
   adoFieldTargetDate: getOptionalEnv('ADO_FIELD_TARGET_DATE', 'Microsoft.VSTS.Scheduling.TargetDate'),
+  adoFieldGoLive: getOptionalEnv('ADO_FIELD_GO_LIVE', 'Custom.GoLive'),
   adoLinkType: getOptionalEnv('ADO_LINK_TYPE', 'System.LinkTypes.Hierarchy-Forward'),
   adoIterationBasePath: process.env.ADO_ITERATION_BASE_PATH,
   port: parseInt(getOptionalEnv('PORT', '3001'), 10),
@@ -63,6 +65,7 @@ export const fieldMappings = {
   boardColumn: env.adoFieldBoardColumn,
   deployDate: env.adoFieldDeployDate,
   targetDate: env.adoFieldTargetDate,
+  goLive: env.adoFieldGoLive,
 } as const;
 
 /**

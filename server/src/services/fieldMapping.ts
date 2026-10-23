@@ -4,6 +4,7 @@ export interface FieldMappingConfig {
   boardColumn: string;
   deployDate: string;
   targetDate: string;
+  goLive: string;
 }
 
 export function getFieldMappings(): FieldMappingConfig {
@@ -11,6 +12,7 @@ export function getFieldMappings(): FieldMappingConfig {
     boardColumn: fieldMappings.boardColumn,
     deployDate: fieldMappings.deployDate,
     targetDate: fieldMappings.targetDate,
+    goLive: fieldMappings.goLive,
   };
 }
 

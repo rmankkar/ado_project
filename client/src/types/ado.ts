@@ -15,6 +15,7 @@ export interface Bug {
   severity: string | null;
   priority: number | null;
   boardColumn: string | null;
+  goLive: string | null;
   createdDate: string | null;
   changedDate: string | null;
   parentUserStory: {
@@ -61,6 +62,7 @@ export interface Bug {
   severity: string | null;
   priority: number | null;
   boardColumn: string | null;
+  goLive: string | null;
   createdDate: string | null;
   changedDate: string | null;
   parentUserStory: {

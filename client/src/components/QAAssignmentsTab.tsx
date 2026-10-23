@@ -237,15 +237,6 @@ export function QAAssignmentsTab() {
       {/* Pie Charts - 3 Columns */}
       {selectedIterationPath && (totalQaUserStories > 0 || userStories.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Child Bug Status Pie Chart */}
-          <div className="card p-6">
-            <StatusPieChart
-              title="Child Bug Status Distribution (Closed/Removed excluded)"
-              data={childBugStatusCounts}
-              total={totalChildBugs}
-              height={280}
-            />
-          </div>
 
           {/* Board Column Pie Chart */}
           <div className="card p-6">
@@ -263,6 +254,16 @@ export function QAAssignmentsTab() {
               title="User Stories by Assignee"
               data={assignedToCounts}
               total={userStories.length}
+              height={280}
+            />
+          </div>
+
+           {/* Child Bug Status Pie Chart */}
+          <div className="card p-6">
+            <StatusPieChart
+              title="Child Bug Status Distribution(Closed/Removed excluded)"
+              data={childBugStatusCounts}
+              total={totalChildBugs}
               height={280}
             />
           </div>

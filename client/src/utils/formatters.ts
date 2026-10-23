@@ -63,3 +63,40 @@ export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 1) + '…';
 }
+
+/**
+ * Calculate the number of days since a given date string until now
+ * Returns null if the date string is invalid or null
+ */
+export function getDaysSince(dateString: string | null): number | null {
+  if (!dateString) return null;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+    // Compare only the date part (ignore time)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - compareDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the age label for a bug based on days since creation
+ * Returns an object with the label text and CSS class, or null if <= 7 days
+ */
+export function getBugAgeLabel(dateString: string | null): { text: string; className: string } | null {
+  const daysSince = getDaysSince(dateString);
+  if (daysSince === null || daysSince <= 4) return null;
+
+  if (daysSince > 12) {
+    return { text: `${daysSince} days`, className: 'bg-red-100 text-red-700' };
+  }
+  // 8-12 days
+  return { text: `${daysSince} days`, className: 'bg-yellow-100 text-yellow-700' };
+}
