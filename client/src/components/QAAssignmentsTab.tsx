@@ -117,8 +117,8 @@ export function QAAssignmentsTab() {
     <div className="space-y-6">
       {/* Iteration Selector */}
       <div className="card p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="flex-1">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-4">
+          <div className="flex-1 md:flex-none w-full md:w-96">
             <label className="block text-sm font-medium text-neutral-700 mb-2">
               Select Iteration
             </label>
@@ -130,7 +130,7 @@ export function QAAssignmentsTab() {
                   clearQaUserStories();
                 }}
                 disabled={isFetchingIterations}
-                className="w-full md:w-96 px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:cursor-not-allowed appearance-none"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:cursor-not-allowed appearance-none pr-10"
               >
                 <option value="">-- Select an Iteration --</option>
                 {iterations.map(iteration => (
@@ -147,7 +147,7 @@ export function QAAssignmentsTab() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 w-full md:w-auto">
             <button
               onClick={handleFetchIterations}
               className="btn-secondary"
