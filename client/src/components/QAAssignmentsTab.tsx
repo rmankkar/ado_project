@@ -99,6 +99,19 @@ export function QAAssignmentsTab() {
       .sort((a, b) => b.count - a.count);
   }, [userStories]);
 
+  // Compute specific board column counts for insight boxes
+  const newColumnCount = useMemo(() => {
+    return userStories.filter(us => us.boardColumn?.toLowerCase() === 'new').length;
+  }, [userStories]);
+
+  const blockedColumnCount = useMemo(() => {
+    return userStories.filter(us => us.boardColumn?.toLowerCase() === 'blocked').length;
+  }, [userStories]);
+
+  const inProgressQaColumnCount = useMemo(() => {
+    return userStories.filter(us => us.boardColumn?.toLowerCase() === 'in progress(qa)').length;
+  }, [userStories]);
+
   // Compute assigned to counts for the pie chart
   const assignedToCounts = useMemo((): StatusCount[] => {
     const assignedMap = new Map<string, number>();
@@ -223,6 +236,23 @@ export function QAAssignmentsTab() {
               <div className="p-3 bg-red-50 rounded-lg">
                 <div className="text-2xl font-bold text-red-700">{totalChildBugs}</div>
                 <div className="text-sm text-red-600">Open Child Bugs</div>
+              </div>
+
+              {/* Vertical Separator */}
+              <div className="h-12 w-px bg-neutral-200 mx-2" />
+
+              {/* Board Column Count Boxes */}
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <div className="text-2xl font-bold text-blue-700">{newColumnCount}</div>
+                <div className="text-sm text-blue-600">Board Column: New</div>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="text-2xl font-bold text-amber-700">{blockedColumnCount}</div>
+                <div className="text-sm text-amber-600">Board Column: Blocked</div>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
+                <div className="text-2xl font-bold text-purple-700">{inProgressQaColumnCount}</div>
+                <div className="text-sm text-purple-600">Board Column: In Progress(QA)</div>
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm text-neutral-600">
