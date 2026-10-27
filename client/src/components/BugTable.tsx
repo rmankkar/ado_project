@@ -17,6 +17,7 @@ interface BugTableProps {
 interface FilterState {
   status: string;
   assignedTo: string;
+  detectedBy: string;
   goLive: string;
   severity: string;
   searchText: string;
@@ -33,6 +34,7 @@ export function BugTable({
   const [filters, setFilters] = useState<FilterState>({
     status: '',
     assignedTo: '',
+    detectedBy: '',
     goLive: '',
     severity: '',
     searchText: '',
@@ -78,6 +80,10 @@ export function BugTable({
     [...new Set(bugs.map(s => s.assignedTo).filter((v): v is string => v !== null))].sort(),
     [bugs]
   );
+  const uniqueDetectedBy = useMemo((): string[] =>
+    [...new Set(bugs.map(s => s.detectedBy).filter((v): v is string => v !== null))].sort(),
+    [bugs]
+  );
   const uniqueGoLive = useMemo((): string[] =>
     [...new Set(bugs.map(s => s.goLive).filter((v): v is string => v !== null))].sort(),
     [bugs]
@@ -97,6 +103,9 @@ export function BugTable({
     }
     if (filters.assignedTo) {
       result = result.filter(s => s.assignedTo === filters.assignedTo);
+    }
+    if (filters.detectedBy) {
+      result = result.filter(s => s.detectedBy === filters.detectedBy);
     }
     if (filters.goLive) {
       result = result.filter(s => s.goLive === filters.goLive);
@@ -132,6 +141,10 @@ export function BugTable({
         case 'assignedTo':
           aVal = (a.assignedTo ?? '').toLowerCase();
           bVal = (b.assignedTo ?? '').toLowerCase();
+          break;
+        case 'detectedBy':
+          aVal = (a.detectedBy ?? '').toLowerCase();
+          bVal = (b.detectedBy ?? '').toLowerCase();
           break;
         case 'goLive':
           aVal = (a.goLive ?? '').toLowerCase();
@@ -179,10 +192,10 @@ export function BugTable({
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', goLive: '', severity: '', searchText: '' });
+    setFilters({ status: '', assignedTo: '', detectedBy: '', goLive: '', severity: '', searchText: '' });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.goLive || filters.severity || filters.searchText;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.detectedBy || filters.goLive || filters.severity || filters.searchText;
 
   if (isLoading) {
     return (
@@ -196,6 +209,7 @@ export function BugTable({
               <th>Severity</th>
               <th>Priority</th>
               <th>Assigned To</th>
+              <th>Detected By</th>
               <th>Go Live</th>
               <th>Created</th>
               <th>Parent User Story</th>
@@ -210,6 +224,7 @@ export function BugTable({
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-20 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-16 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
@@ -294,6 +309,19 @@ export function BugTable({
             </select>
           </div>
           <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Detected By:</label>
+            <select
+              value={filters.detectedBy}
+              onChange={(e) => handleFilterChange('detectedBy', e.target.value)}
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">All</option>
+              {uniqueDetectedBy.map(detectedBy => (
+                <option key={detectedBy} value={detectedBy}>{detectedBy}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-neutral-700">Go Live:</label>
             <select
               value={filters.goLive}
@@ -357,6 +385,12 @@ export function BugTable({
                   {getSortIcon('assignedTo') && <span className="text-neutral-400">{getSortIcon('assignedTo')}</span>}
                 </div>
               </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('detectedBy')}>
+                <div className="flex items-center gap-1">
+                  Detected By
+                  {getSortIcon('detectedBy') && <span className="text-neutral-400">{getSortIcon('detectedBy')}</span>}
+                </div>
+              </th>
               <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('goLive')}>
                 <div className="flex items-center gap-1">
                   Go Live
@@ -385,7 +419,7 @@ export function BugTable({
           <tbody>
             {filteredAndSortedBugs.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-8 text-neutral-500">
+                <td colSpan={11} className="text-center py-8 text-neutral-500">
                   No open bugs found for the selected iteration. This could mean there are no bugs linked to User Stories in this iteration.
                 </td>
               </tr>
@@ -418,6 +452,9 @@ export function BugTable({
                 </td>
                 <td className="text-neutral-600">
                   {bug.assignedTo ?? '—'}
+                </td>
+                <td className="text-neutral-600">
+                  {bug.detectedBy ?? '—'}
                 </td>
                 <td className="text-neutral-600">
                   {bug.goLive ?? '—'}

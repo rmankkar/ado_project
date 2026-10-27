@@ -98,6 +98,7 @@ export interface Bug {
   goLive: string | null;
   createdDate: string | null;
   changedDate: string | null;
+  detectedBy: string | null;
   parentUserStory: {
     id: number;
     title: string;
@@ -224,6 +225,7 @@ export function mapWorkItemToBug(
   const priorityValue = fields['Microsoft.VSTS.Common.Priority'] as number | undefined;
   const createdDateValue = fields['System.CreatedDate'] as string | undefined;
   const changedDateValue = fields['System.ChangedDate'] as string | undefined;
+  const detectedByValue = fields['Custom.DetectedByPerson'] as AdoIdentityRef | undefined;
 
   // Construct parent User Story URL if parent exists
   const parentUserStoryWithUrl = parentUserStory
@@ -244,6 +246,7 @@ export function mapWorkItemToBug(
     goLive: goLiveValue ?? null,
     createdDate: createdDateValue ?? null,
     changedDate: changedDateValue ?? null,
+    detectedBy: detectedByValue?.displayName ?? null,
     parentUserStory: parentUserStoryWithUrl,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };

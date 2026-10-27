@@ -18,6 +18,7 @@ export interface Bug {
   goLive: string | null;
   createdDate: string | null;
   changedDate: string | null;
+  detectedBy: string | null;
   parentUserStory: {
     id: number;
     title: string;
@@ -65,6 +66,7 @@ export interface Bug {
   goLive: string | null;
   createdDate: string | null;
   changedDate: string | null;
+  detectedBy: string | null;
   parentUserStory: {
     id: number;
     title: string;
@@ -137,7 +139,7 @@ export interface FetchTestCasesResponse {
   errors: FetchError[];
 }
 
-export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy' | 'goLive';
+export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'detectedBy' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy' | 'goLive';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {
