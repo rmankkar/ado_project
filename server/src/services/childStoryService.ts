@@ -23,6 +23,7 @@ function buildChildQuery(featureIds: number[]): string {
     WHERE [Source].[System.Id] IN (${ids})
       AND [System.Links.LinkType] = '${linkType}'
       AND [Target].[System.WorkItemType] = '${WORK_ITEM_TYPE_USER_STORY}'
+      AND [Target].[System.State] <> 'Removed'
     ORDER BY [System.Id]
     MODE (Recursive)
   `;

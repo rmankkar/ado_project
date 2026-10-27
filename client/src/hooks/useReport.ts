@@ -14,7 +14,10 @@ export interface FeatureReportData {
   totalChildStories: number;
 }
 
-export function useReportData(): {
+export function useReportData(
+  featuresProp?: Feature[],
+  childStoriesProp?: ChildUserStory[]
+): {
   featureStatusCounts: StatusCount[];
   featureReports: FeatureReportData[];
   totalFeatures: number;
@@ -22,8 +25,8 @@ export function useReportData(): {
   generatedAt: string;
 } {
   const queryClient = useQueryClient();
-  const features = queryClient.getQueryData<Feature[]>(['features']) ?? [];
-  const childStories = queryClient.getQueryData<ChildUserStory[]>(['childStories']) ?? [];
+  const features = featuresProp ?? queryClient.getQueryData<Feature[]>(['features']) ?? [];
+  const childStories = childStoriesProp ?? queryClient.getQueryData<ChildUserStory[]>(['childStories']) ?? [];
 
   // Feature status counts
   const featureStatusMap = new Map<string, number>();

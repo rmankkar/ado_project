@@ -158,3 +158,28 @@ export interface FetchCommentsResponse {
   comments: Comment[];
   errors: FetchError[];
 }
+
+export interface ReleaseItem {
+  id: number;
+  title: string;
+  state: string;
+}
+
+export interface ReleaseWithFeatures {
+  releaseId: number;
+  releaseTitle: string;
+  stageGateId: number;
+  stageGateTitle: string;
+  features: Feature[];
+  childStories: ChildUserStory[];
+}
+
+export interface FetchReleaseFeaturesResponse {
+  releases: ReleaseWithFeatures[];
+  errors: FetchError[];
+}
+
+export interface FetchReleasesResponse {
+  releases: ReleaseItem[];
+  errors: FetchError[];
+}

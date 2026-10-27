@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useFetchFeatures, useFeatures, useFetchErrors } from './hooks/useFeatures.js';
 import { useFetchChildStories, useChildStories, useChildStoryErrors, useClearChildStories } from './hooks/useChildStories.js';
+import { useFetchReleaseFeatures, useClearReleaseFeatures, useFetchReleases, useReleases } from './hooks/useReleaseFeatures.js';
 import { Header } from './components/Header.js';
 import { FeatureInput } from './components/FeatureInput.js';
 import { FeatureTable } from './components/FeatureTable.js';
@@ -11,7 +12,7 @@ import { TestCaseReviewTab } from './components/TestCaseReviewTab.js';
 import { QAAssignmentsTab } from './components/QAAssignmentsTab.js';
 import { Tabs } from './components/Tabs.js';
 import { LoadingOverlay } from './components/LoadingSpinner.js';
-import type { SortField, SortDirection } from './types/ado.js';
+import type { SortField, SortDirection, ReleaseWithFeatures, ChildUserStory } from './types/ado.js';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'features' | 'bugs' | 'testcases' | 'qaassignments'>('features');
@@ -19,6 +20,8 @@ function App() {
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<number>>(new Set());
   const [sortState, setSortState] = useState<{ field: SortField; direction: SortDirection }>({ field: 'id', direction: 'asc' });
   const [childSortState, setChildSortState] = useState<{ field: SortField; direction: SortDirection }>({ field: 'id', direction: 'asc' });
+  const [releaseFeaturesData, setReleaseFeaturesData] = useState<ReleaseWithFeatures[]>([]);
+  const [selectedReleaseIds, setSelectedReleaseIds] = useState<number[]>([]);
 
   const fetchFeaturesMutation = useFetchFeatures();
   const features = useFeatures();
@@ -29,18 +32,53 @@ function App() {
   const childStoryErrors = useChildStoryErrors();
   const clearChildStories = useClearChildStories();
 
+  const fetchReleaseFeaturesMutation = useFetchReleaseFeatures();
+  const fetchReleasesMutation = useFetchReleases();
+  const releasesData = useReleases();
+  const clearReleaseFeatures = useClearReleaseFeatures();
+
   const isFetchingFeatures = fetchFeaturesMutation.isPending;
   const isFetchingChildStories = fetchChildStoriesMutation.isPending;
+  const isFetchingReleaseFeatures = fetchReleaseFeaturesMutation.isPending;
+  const isLoadingReleases = fetchReleasesMutation.isPending;
 
   const handleFetchFeatures = useCallback((ids: number[]) => {
     setView('tables');
     clearChildStories();
+    clearReleaseFeatures();
+    setReleaseFeaturesData([]);
     fetchFeaturesMutation.mutate(ids);
-  }, [fetchFeaturesMutation, clearChildStories]);
+  }, [fetchFeaturesMutation, clearChildStories, clearReleaseFeatures]);
 
   const handleFetchChildStories = useCallback(() => {
     fetchChildStoriesMutation.mutate(Array.from(selectedFeatureIds));
   }, [fetchChildStoriesMutation, selectedFeatureIds]);
+
+  const handleLoadReleases = useCallback(async () => {
+    try {
+      await fetchReleasesMutation.mutateAsync();
+    } catch (error) {
+      console.error('Failed to load releases:', error);
+    }
+  }, [fetchReleasesMutation]);
+
+  const handleFetchReleaseFeatures = useCallback(async (releaseIds: number[]) => {
+    setView('tables');
+    clearChildStories();
+    fetchFeaturesMutation.mutate([]); // Clear features
+    setReleaseFeaturesData([]);
+    clearReleaseFeatures();
+    setSelectedReleaseIds(releaseIds);
+
+    try {
+      const result = await fetchReleaseFeaturesMutation.mutateAsync(releaseIds);
+      if (result?.releases) {
+        setReleaseFeaturesData(result.releases);
+      }
+    } catch (error) {
+      console.error('Failed to fetch release features:', error);
+    }
+  }, [fetchFeaturesMutation, fetchReleaseFeaturesMutation, clearChildStories, clearReleaseFeatures]);
 
   const handleReport = useCallback(() => {
     setView('report');
@@ -80,16 +118,64 @@ function App() {
     }));
   }, []);
 
+  const handleReleaseSelectionChange = useCallback((ids: number[]) => {
+    setSelectedReleaseIds(ids);
+  }, []);
+
   const handleDismissFetchErrors = useCallback(() => {
     // Errors are cleared on next fetch
   }, []);
 
-  const tabs = [
-    { id: 'features', label: 'Features & User Stories' },
-    { id: 'bugs', label: 'Iteration Bugs' },
-    { id: 'testcases', label: 'Test Case Review' },
-    { id: 'qaassignments', label: 'QA Assignments' },
-  ];
+  const hasFeatures = features.length > 0;
+  const hasReleaseFeatures = releaseFeaturesData.length > 0;
+  const combinedFeatures = hasReleaseFeatures ? releaseFeaturesData.flatMap(r => r.features) : features;
+  const combinedChildStories = hasReleaseFeatures ? releaseFeaturesData.flatMap(r => r.childStories) : childStories;
+
+  // Build map of featureId -> child stories for expandable rows in release features mode
+  const featureChildStories = useMemo(() => {
+    if (!hasReleaseFeatures) return new Map<number, ChildUserStory[]>();
+    const map = new Map<number, ChildUserStory[]>();
+    for (const release of releaseFeaturesData) {
+      for (const story of release.childStories) {
+        const featureId = story.parentFeature.id;
+        if (!map.has(featureId)) {
+          map.set(featureId, []);
+        }
+        map.get(featureId)!.push(story);
+      }
+    }
+    return map;
+  }, [releaseFeaturesData, hasReleaseFeatures]);
+
+  // Get releases for dropdown from cached data
+  const releases = releasesData?.releases ?? [];
+
+  // Specific board column counts for insight boxes
+  const newColumnCount = useMemo(() => {
+    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'new').length;
+  }, [combinedChildStories]);
+
+  const blockedColumnCount = useMemo(() => {
+    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'blocked').length;
+  }, [combinedChildStories]);
+
+  const inProgressQaColumnCount = useMemo(() => {
+    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'in progress(qa)').length;
+  }, [combinedChildStories]);
+
+  const committedColumnCount = useMemo(() => {
+    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'committed').length;
+  }, [combinedChildStories]);
+
+  const backlogColumnCount = useMemo(() => {
+    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'backlog').length;
+  }, [combinedChildStories]);
+
+  const inProgressDevColumnCount = useMemo(() => {
+    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'in progress (dev)').length;
+  }, [combinedChildStories]);
+
+  const totalChildStories = combinedChildStories.length;
 
   const allErrors = [...fetchErrors, ...childStoryErrors];
 
@@ -98,7 +184,12 @@ function App() {
       <Header />
 
       {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={(tabId) => setActiveTab(tabId as 'features' | 'bugs' | 'testcases' | 'qaassignments')} />
+      <Tabs tabs={[
+        { id: 'features', label: 'Features & User Stories' },
+        { id: 'bugs', label: 'Iteration Bugs' },
+        { id: 'testcases', label: 'Test Case Review' },
+        { id: 'qaassignments', label: 'QA Assignments' },
+      ]} activeTab={activeTab} onChange={(tabId) => setActiveTab(tabId as 'features' | 'bugs' | 'testcases' | 'qaassignments')} />
 
       <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {allErrors.length > 0 && activeTab === 'features' && (
@@ -129,23 +220,79 @@ function App() {
                   onReport={handleReport}
                   isFetching={isFetchingFeatures}
                   isReporting={false}
-                  hasFeatures={features.length > 0}
+                  hasFeatures={hasFeatures}
                   fetchErrors={[]}
                   onDismissErrors={handleDismissFetchErrors}
+                  onFetchReleaseFeatures={handleFetchReleaseFeatures}
+                  onLoadReleases={handleLoadReleases}
+                  isFetchingReleaseFeatures={isFetchingReleaseFeatures}
+                  isLoadingReleases={isLoadingReleases}
+                  hasReleaseFeatures={hasReleaseFeatures}
+                  releaseFeaturesFetchErrors={[]}
+                  onDismissReleaseFeaturesErrors={handleDismissFetchErrors}
+                  releases={releases}
+                  selectedReleaseIds={selectedReleaseIds}
+                  onReleaseSelectionChange={handleReleaseSelectionChange}
                 />
 
+                {/* Insights Section for Child User Stories - moved above Feature Table */}
+                {totalChildStories > 0 && (
+                  <div className="card p-4 mb-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary-50 rounded-lg">
+                          <div className="text-2xl font-bold text-primary-700">{totalChildStories}</div>
+                          <div className="text-sm text-primary-600">Total Child User Stories</div>
+                        </div>
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <div className="text-2xl font-bold text-green-700">{combinedFeatures.length}</div>
+                          <div className="text-sm text-green-600">Parent Features</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {/* Board Column Count Boxes */}
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                          <div className="text-2xl font-bold text-blue-700">{newColumnCount}</div>
+                          <div className="text-sm text-blue-600">Board Column: New</div>
+                        </div>
+                        <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                          <div className="text-2xl font-bold text-amber-700">{blockedColumnCount}</div>
+                          <div className="text-sm text-amber-600">Board Column: Blocked</div>
+                        </div>
+                        <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
+                          <div className="text-2xl font-bold text-purple-700">{inProgressQaColumnCount}</div>
+                          <div className="text-sm text-purple-600">Board Column: In Progress(QA)</div>
+                        </div>
+                        <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                          <div className="text-2xl font-bold text-indigo-700">{committedColumnCount}</div>
+                          <div className="text-sm text-indigo-600">Board Column: Committed</div>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <div className="text-2xl font-bold text-slate-700">{backlogColumnCount}</div>
+                          <div className="text-sm text-slate-600">Board Column: Backlog</div>
+                        </div>
+                        <div className="p-3 bg-teal-50 rounded-lg border border-teal-100">
+                          <div className="text-2xl font-bold text-teal-700">{inProgressDevColumnCount}</div>
+                          <div className="text-sm text-teal-600">Board Column: In Progress(DEV)</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <FeatureTable
-                  features={features}
-                  isLoading={isFetchingFeatures}
+                  features={combinedFeatures}
+                  isLoading={isFetchingFeatures || isFetchingReleaseFeatures}
                   selectedIds={selectedFeatureIds}
                   onSelectAll={handleSelectAll}
                   onSelectOne={handleSelectOne}
                   onSort={handleSort}
                   sortState={sortState}
+                  featureChildStories={featureChildStories}
                 />
 
                 <ChildStoryTable
-                  childStories={childStories}
+                  childStories={combinedChildStories}
                   isLoading={isFetchingChildStories}
                   isFetching={isFetchingChildStories}
                   onFetch={handleFetchChildStories}
@@ -155,7 +302,11 @@ function App() {
                 />
               </>
             ) : (
-              <ReportDashboard onBack={() => setView('tables')} />
+              <ReportDashboard
+                onBack={() => setView('tables')}
+                features={combinedFeatures}
+                childStories={combinedChildStories}
+              />
             )}
           </>
         ) : activeTab === 'bugs' ? (
@@ -167,8 +318,13 @@ function App() {
         )}
       </main>
 
-      {(isFetchingFeatures || isFetchingChildStories) && activeTab === 'features' && (
-        <LoadingOverlay message={isFetchingFeatures ? 'Fetching Features...' : 'Fetching Child User Stories...'} />
+      {(isFetchingFeatures || isFetchingChildStories || isFetchingReleaseFeatures || isLoadingReleases) && activeTab === 'features' && (
+        <LoadingOverlay message={
+          isLoadingReleases ? 'Loading Releases...' :
+          isFetchingFeatures ? 'Fetching Features...' :
+          isFetchingReleaseFeatures ? 'Fetching Release Features...' :
+          'Fetching Child User Stories...'
+        } />
       )}
     </div>
   );

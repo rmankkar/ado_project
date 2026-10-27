@@ -9,6 +9,8 @@ import type {
   ChildUserStory,
   FetchError,
   FetchCommentsResponse,
+  FetchReleaseFeaturesResponse,
+  FetchReleasesResponse,
 } from '../types/ado.js';
 
 const API_BASE = '/api';
@@ -80,6 +82,17 @@ export const adoApi = {
 
   async fetchComments(workItemId: number): Promise<FetchCommentsResponse> {
     return fetchJson<FetchCommentsResponse>(`${API_BASE}/comments/${workItemId}`);
+  },
+
+  async fetchReleases(): Promise<FetchReleasesResponse> {
+    return fetchJson<FetchReleasesResponse>(`${API_BASE}/release-features`);
+  },
+
+  async fetchReleaseFeatures(releaseIds?: number[]): Promise<FetchReleaseFeaturesResponse> {
+    return fetchJson<FetchReleaseFeaturesResponse>(`${API_BASE}/release-features/from-release`, {
+      method: 'POST',
+      body: JSON.stringify({ releaseIds }),
+    });
   },
 };
 

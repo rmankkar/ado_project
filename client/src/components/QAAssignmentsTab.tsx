@@ -112,6 +112,14 @@ export function QAAssignmentsTab() {
     return userStories.filter(us => us.boardColumn?.toLowerCase() === 'in progress(qa)').length;
   }, [userStories]);
 
+  const backlogColumnCount = useMemo(() => {
+    return userStories.filter(us => us.boardColumn?.toLowerCase() === 'backlog').length;
+  }, [userStories]);
+
+  const inProgressDevColumnCount = useMemo(() => {
+    return userStories.filter(us => us.boardColumn?.toLowerCase() === 'in progress (dev)').length;
+  }, [userStories]);
+
   // Compute assigned to counts for the pie chart
   const assignedToCounts = useMemo((): StatusCount[] => {
     const assignedMap = new Map<string, number>();
@@ -253,6 +261,14 @@ export function QAAssignmentsTab() {
               <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
                 <div className="text-2xl font-bold text-purple-700">{inProgressQaColumnCount}</div>
                 <div className="text-sm text-purple-600">Board Column: In Progress(QA)</div>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <div className="text-2xl font-bold text-slate-700">{backlogColumnCount}</div>
+                <div className="text-sm text-slate-600">Board Column: Backlog</div>
+              </div>
+              <div className="p-3 bg-teal-50 rounded-lg border border-teal-100">
+                <div className="text-2xl font-bold text-teal-700">{inProgressDevColumnCount}</div>
+                <div className="text-sm text-teal-600">Board Column: In Progress(DEV)</div>
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm text-neutral-600">

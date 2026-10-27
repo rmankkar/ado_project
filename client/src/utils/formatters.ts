@@ -15,9 +15,19 @@ export function formatDate(dateString: string | null): string {
 
 /**
  * Check if a date string represents a date in the past (before today)
+ * Optionally exclude certain statuses (e.g., "Completed", "Closed") from showing as past due
  */
-export function isDateInPast(dateString: string | null): boolean {
+export function isDateInPast(dateString: string | null, status?: string | null): boolean {
   if (!dateString) return false;
+
+  // Don't highlight as past due if status is Completed or Closed
+  if (status) {
+    const normalizedStatus = status.toLowerCase();
+    if (normalizedStatus === 'completed' || normalizedStatus === 'closed') {
+      return false;
+    }
+  }
+
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return false;

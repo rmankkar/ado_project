@@ -449,10 +449,10 @@ export function QAAssignmentsTable({
                     <td className="text-neutral-600">
                       {story.boardColumn ?? '—'}
                     </td>
-                    <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.deployDate) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.deployDate) ? 600 : 400 }}>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.deployDate, story.status) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.deployDate, story.status) ? 600 : 400 }}>
                       {formatDate(story.deployDate)}
                     </td>
-                    <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.targetDate) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.targetDate) ? 600 : 400 }}>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.targetDate, story.status) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.targetDate, story.status) ? 600 : 400 }}>
                       {formatDate(story.targetDate)}
                     </td>
                     <td className="font-mono text-sm text-neutral-600">

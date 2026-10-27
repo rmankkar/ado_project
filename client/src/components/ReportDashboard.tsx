@@ -2,15 +2,22 @@ import { useReportData } from '../hooks/useReport.js';
 import { StatusPieChart } from './StatusPieChart.js';
 import { InfoAlert } from './ErrorAlert.js';
 import { formatDateTime } from '../utils/formatters.js';
+import type { Feature, ChildUserStory } from '../types/ado.js';
 
-export function ReportDashboard({ onBack }: { onBack: () => void }) {
+interface ReportDashboardProps {
+  onBack: () => void;
+  features?: Feature[];
+  childStories?: ChildUserStory[];
+}
+
+export function ReportDashboard({ onBack, features: propFeatures, childStories: propChildStories }: ReportDashboardProps) {
   const {
     featureStatusCounts,
     featureReports,
     totalFeatures,
     totalChildStories,
     generatedAt,
-  } = useReportData();
+  } = useReportData(propFeatures, propChildStories);
 
   const hasData = totalFeatures > 0 || totalChildStories > 0;
 
