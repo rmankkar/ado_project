@@ -84,13 +84,18 @@ function App() {
     setView('report');
   }, []);
 
+  const hasFeatures = features.length > 0;
+  const hasReleaseFeatures = releaseFeaturesData.length > 0;
+  const combinedFeatures = hasReleaseFeatures ? releaseFeaturesData.flatMap(r => r.features) : features;
+  const combinedChildStories = hasReleaseFeatures ? releaseFeaturesData.flatMap(r => r.childStories) : childStories;
+
   const handleSelectAll = useCallback(() => {
-    if (selectedFeatureIds.size === features.length) {
+    if (selectedFeatureIds.size === combinedFeatures.length && combinedFeatures.length > 0) {
       setSelectedFeatureIds(new Set());
     } else {
-      setSelectedFeatureIds(new Set(features.map(f => f.id)));
+      setSelectedFeatureIds(new Set(combinedFeatures.map(f => f.id)));
     }
-  }, [selectedFeatureIds, features]);
+  }, [selectedFeatureIds, combinedFeatures]);
 
   const handleSelectOne = useCallback((id: number) => {
     setSelectedFeatureIds(prev => {
@@ -126,11 +131,6 @@ function App() {
     // Errors are cleared on next fetch
   }, []);
 
-  const hasFeatures = features.length > 0;
-  const hasReleaseFeatures = releaseFeaturesData.length > 0;
-  const combinedFeatures = hasReleaseFeatures ? releaseFeaturesData.flatMap(r => r.features) : features;
-  const combinedChildStories = hasReleaseFeatures ? releaseFeaturesData.flatMap(r => r.childStories) : childStories;
-
   // Build map of featureId -> child stories for expandable rows in release features mode
   const featureChildStories = useMemo(() => {
     if (!hasReleaseFeatures) return new Map<number, ChildUserStory[]>();
@@ -150,32 +150,49 @@ function App() {
   // Get releases for dropdown from cached data
   const releases = releasesData?.releases ?? [];
 
+  // Filter child stories for insights: if features are selected, show only those features' child stories
+  const insightChildStories = useMemo(() => {
+    if (selectedFeatureIds.size > 0) {
+      return combinedChildStories.filter(s => selectedFeatureIds.has(s.parentFeature?.id));
+    }
+    return combinedChildStories;
+  }, [combinedChildStories, selectedFeatureIds]);
+
   // Specific board column counts for insight boxes
   const newColumnCount = useMemo(() => {
-    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'new').length;
-  }, [combinedChildStories]);
+    return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'new').length;
+  }, [insightChildStories]);
 
   const blockedColumnCount = useMemo(() => {
-    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'blocked').length;
-  }, [combinedChildStories]);
+    return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'blocked').length;
+  }, [insightChildStories]);
 
   const inProgressQaColumnCount = useMemo(() => {
-    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'in progress(qa)').length;
-  }, [combinedChildStories]);
+    return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'in progress(qa)').length;
+  }, [insightChildStories]);
 
   const committedColumnCount = useMemo(() => {
-    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'committed').length;
-  }, [combinedChildStories]);
+    return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'committed').length;
+  }, [insightChildStories]);
 
   const backlogColumnCount = useMemo(() => {
-    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'backlog').length;
-  }, [combinedChildStories]);
+    return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'backlog').length;
+  }, [insightChildStories]);
 
   const inProgressDevColumnCount = useMemo(() => {
-    return combinedChildStories.filter(s => s.boardColumn?.toLowerCase() === 'in progress (dev)').length;
-  }, [combinedChildStories]);
+    return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'in progress (dev)').length;
+  }, [insightChildStories]);
 
-  const totalChildStories = combinedChildStories.length;
+  // New insight boxes for Closed and PO Review
+  const closedColumnCount = useMemo(() => {
+    return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'closed').length;
+  }, [insightChildStories]);
+
+  const poReviewColumnCount = useMemo(() => {
+    return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'po review').length;
+  }, [insightChildStories]);
+
+  const totalChildStories = insightChildStories.length;
 
   const allErrors = [...fetchErrors, ...childStoryErrors];
 
@@ -275,6 +292,14 @@ function App() {
                           <div className="text-2xl font-bold text-teal-700">{inProgressDevColumnCount}</div>
                           <div className="text-sm text-teal-600">Board Column: In Progress(DEV)</div>
                         </div>
+                        <div className="p-3 bg-red-50 rounded-lg border border-red-100">
+                          <div className="text-2xl font-bold text-red-700">{closedColumnCount}</div>
+                          <div className="text-sm text-red-600">Board Column: Closed</div>
+                        </div>
+                        <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
+                          <div className="text-2xl font-bold text-orange-700">{poReviewColumnCount}</div>
+                          <div className="text-sm text-orange-600">Board Column: PO Review</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -292,7 +317,7 @@ function App() {
                 />
 
                 <ChildStoryTable
-                  childStories={combinedChildStories}
+                  childStories={insightChildStories}
                   isLoading={isFetchingChildStories}
                   isFetching={isFetchingChildStories}
                   onFetch={handleFetchChildStories}
