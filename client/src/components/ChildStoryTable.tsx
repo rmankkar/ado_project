@@ -20,6 +20,7 @@ interface FilterState {
   assignedTo: string;
   boardColumn: string;
   hideRemoved: boolean;
+  searchText: string;
 }
 
 export function ChildStoryTable({
@@ -38,6 +39,7 @@ export function ChildStoryTable({
     assignedTo: '',
     boardColumn: '',
     hideRemoved: true,
+    searchText: '',
   });
 
   const handleFetch = () => {
@@ -77,6 +79,11 @@ export function ChildStoryTable({
     }
     if (filters.boardColumn) {
       result = result.filter(s => s.boardColumn === filters.boardColumn);
+    }
+    // Apply search text filter (case-insensitive search on title)
+    if (filters.searchText) {
+      const searchLower = filters.searchText.toLowerCase();
+      result = result.filter(s => s.title.toLowerCase().includes(searchLower));
     }
 
     // Apply sorting
@@ -175,10 +182,10 @@ export function ChildStoryTable({
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true });
+    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true, searchText: '' });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved || filters.searchText;
 
   if (isLoading) {
     return (
@@ -267,6 +274,16 @@ export function ChildStoryTable({
       {/* Filter Controls */}
       <div className="mb-4 p-3 bg-neutral-50 rounded-lg border border-neutral-200">
         <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Search Title:</label>
+            <input
+              type="text"
+              value={filters.searchText}
+              onChange={(e) => handleFilterChange('searchText', e.target.value)}
+              placeholder="Search user story title..."
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-64"
+            />
+          </div>
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-neutral-700">Status:</label>
             <select

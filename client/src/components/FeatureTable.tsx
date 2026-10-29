@@ -30,6 +30,7 @@ export function FeatureTable({
   const allSelected = features.length > 0 && features.every(f => selectedIds.has(f.id));
   const someSelected = features.some(f => selectedIds.has(f.id));
   const [expandedFeatures, setExpandedFeatures] = useState<Set<number>>(new Set());
+  const [titleFilter, setTitleFilter] = useState('');
 
   const selectAllRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -40,7 +41,15 @@ export function FeatureTable({
 
   const sortedFeatures = useMemo(() => {
     const { field, direction } = sortState;
-    return [...features].sort((a, b) => {
+    let result = [...features];
+
+    // Apply title filter
+    if (titleFilter) {
+      const filterLower = titleFilter.toLowerCase();
+      result = result.filter(f => f.title.toLowerCase().includes(filterLower));
+    }
+
+    return result.sort((a, b) => {
       let aVal: string | number;
       let bVal: string | number;
 
@@ -69,7 +78,7 @@ export function FeatureTable({
       if (aVal > bVal) return direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [features, sortState]);
+  }, [features, sortState, titleFilter]);
 
   const handleSort = (field: SortField) => {
     onSort(field);
@@ -169,7 +178,7 @@ export function FeatureTable({
     <div className="mb-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-neutral-900">
-          Features ({features.length})
+          Features ({sortedFeatures.length} of {features.length})
         </h2>
         <div className="flex items-center gap-3">
           <div className="text-sm text-neutral-500">
@@ -185,6 +194,28 @@ export function FeatureTable({
             </svg>
             Export
           </button>
+        </div>
+      </div>
+
+      {/* Title Search Filter */}
+      <div className="mb-3">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700">Search Title:</label>
+          <input
+            type="text"
+            value={titleFilter}
+            onChange={(e) => setTitleFilter(e.target.value)}
+            placeholder="Search feature title..."
+            className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-64"
+          />
+          {titleFilter && (
+            <button
+              onClick={() => setTitleFilter('')}
+              className="text-sm text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
