@@ -31,6 +31,7 @@ export function FeatureTable({
   const someSelected = features.some(f => selectedIds.has(f.id));
   const [expandedFeatures, setExpandedFeatures] = useState<Set<number>>(new Set());
   const [titleFilter, setTitleFilter] = useState('');
+  const [iterationPathFilter, setIterationPathFilter] = useState('');
 
   const selectAllRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -47,6 +48,11 @@ export function FeatureTable({
     if (titleFilter) {
       const filterLower = titleFilter.toLowerCase();
       result = result.filter(f => f.title.toLowerCase().includes(filterLower));
+    }
+
+    // Apply iteration path filter
+    if (iterationPathFilter) {
+      result = result.filter(f => f.iterationPath === iterationPathFilter);
     }
 
     return result.sort((a, b) => {
@@ -70,6 +76,10 @@ export function FeatureTable({
           aVal = (a.assignedTo ?? '').toLowerCase();
           bVal = (b.assignedTo ?? '').toLowerCase();
           break;
+        case 'iterationPath':
+          aVal = (a.iterationPath ?? '').toLowerCase();
+          bVal = (b.iterationPath ?? '').toLowerCase();
+          break;
         default:
           return 0;
       }
@@ -78,7 +88,7 @@ export function FeatureTable({
       if (aVal > bVal) return direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [features, sortState, titleFilter]);
+  }, [features, sortState, titleFilter, iterationPathFilter]);
 
   const handleSort = (field: SortField) => {
     onSort(field);
@@ -89,6 +99,12 @@ export function FeatureTable({
     return sortState.direction === 'asc' ? '▲' : '▼';
   };
 
+  // Get unique iteration paths for filter dropdown
+  const uniqueIterationPaths = useMemo((): string[] =>
+    [...new Set(features.map(f => f.iterationPath).filter((v): v is string => v !== null))].sort(),
+    [features]
+  );
+
   const handleExport = () => {
     const columns = [
       { header: 'ID', key: 'id', width: 12 },
@@ -96,6 +112,7 @@ export function FeatureTable({
       { header: 'Status', key: 'status', width: 18 },
       { header: 'Assigned To', key: 'assignedTo', width: 25 },
       { header: 'Project', key: 'project', width: 20 },
+      { header: 'Iteration Path', key: 'iterationPath', width: 30 },
       { header: 'URL', key: 'url', width: 50 },
     ];
 
@@ -105,6 +122,7 @@ export function FeatureTable({
       status: f.status,
       assignedTo: f.assignedTo ?? '',
       project: f.project,
+      iterationPath: f.iterationPath ?? '',
       url: f.url,
     }));
 
@@ -219,6 +237,31 @@ export function FeatureTable({
         </div>
       </div>
 
+      {/* Iteration Path Filter */}
+      <div className="mb-3">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700">Iteration Path:</label>
+          <select
+            value={iterationPathFilter}
+            onChange={(e) => setIterationPathFilter(e.target.value)}
+            className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-96"
+          >
+            <option value="">All</option>
+            {uniqueIterationPaths.map(path => (
+              <option key={path} value={path}>{path}</option>
+            ))}
+          </select>
+          {iterationPathFilter && (
+            <button
+              onClick={() => setIterationPathFilter('')}
+              className="text-sm text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="table-container scrollbar-thin">
         <table className="table" role="grid">
           <thead>
@@ -255,6 +298,12 @@ export function FeatureTable({
                 <div className="flex items-center gap-1">
                   Assigned To
                   {getSortIcon('assignedTo') && <span className="text-neutral-400">{getSortIcon('assignedTo')}</span>}
+                </div>
+              </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('iterationPath')}>
+                <div className="flex items-center gap-1">
+                  Iteration Path
+                  {getSortIcon('iterationPath') && <span className="text-neutral-400">{getSortIcon('iterationPath')}</span>}
                 </div>
               </th>
             </tr>
@@ -314,10 +363,13 @@ export function FeatureTable({
                   <td className="text-neutral-600">
                     {feature.assignedTo ?? '—'}
                   </td>
+                  <td className="text-neutral-600 text-sm">
+                    {feature.iterationPath ?? '—'}
+                  </td>
                 </tr>
                 {featureChildStories && hasChildStories(feature.id) && expandedFeatures.has(feature.id) && (
                   <tr key={`${feature.id}-expanded`}>
-                    <td colSpan={5} className="p-0">
+                    <td colSpan={6} className="p-0">
                       <div className="bg-neutral-50 border-t border-neutral-200">
                         <table className="table w-full">
                           <thead>

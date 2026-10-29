@@ -21,6 +21,7 @@ interface FilterState {
   boardColumn: string;
   hideRemoved: boolean;
   searchText: string;
+  iterationPath: string;
 }
 
 export function ChildStoryTable({
@@ -40,6 +41,7 @@ export function ChildStoryTable({
     boardColumn: '',
     hideRemoved: true,
     searchText: '',
+    iterationPath: '',
   });
 
   const handleFetch = () => {
@@ -58,6 +60,10 @@ export function ChildStoryTable({
   );
   const uniqueBoardColumns = useMemo((): string[] =>
     [...new Set(childStories.map(s => s.boardColumn).filter((v): v is string => v !== null))].sort(),
+    [childStories]
+  );
+  const uniqueIterationPaths = useMemo((): string[] =>
+    [...new Set(childStories.map(s => s.iterationPath).filter((v): v is string => v !== null))].sort(),
     [childStories]
   );
 
@@ -79,6 +85,9 @@ export function ChildStoryTable({
     }
     if (filters.boardColumn) {
       result = result.filter(s => s.boardColumn === filters.boardColumn);
+    }
+    if (filters.iterationPath) {
+      result = result.filter(s => s.iterationPath === filters.iterationPath);
     }
     // Apply search text filter (case-insensitive search on title)
     if (filters.searchText) {
@@ -125,6 +134,10 @@ export function ChildStoryTable({
           aVal = `${a.parentFeature.id} ${a.parentFeature.title}`.toLowerCase();
           bVal = `${b.parentFeature.id} ${b.parentFeature.title}`.toLowerCase();
           break;
+        case 'iterationPath':
+          aVal = (a.iterationPath ?? '').toLowerCase();
+          bVal = (b.iterationPath ?? '').toLowerCase();
+          break;
         default:
           return 0;
       }
@@ -155,6 +168,7 @@ export function ChildStoryTable({
       { header: 'Board Column', key: 'boardColumn', width: 20 },
       { header: 'Deploy Date', key: 'deployDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
       { header: 'Target Date', key: 'targetDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
+      { header: 'Iteration Path', key: 'iterationPath', width: 30 },
       { header: 'Parent Feature', key: 'parentFeature', width: 30, render: (v: { id: number; title: string } | null | undefined) => v ? `${v.id} - ${v.title}` : '' },
     ];
 
@@ -166,6 +180,7 @@ export function ChildStoryTable({
       boardColumn: s.boardColumn ?? '',
       deployDate: s.deployDate,
       targetDate: s.targetDate,
+      iterationPath: s.iterationPath ?? '',
       parentFeature: s.parentFeature,
     }));
 
@@ -182,10 +197,10 @@ export function ChildStoryTable({
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true, searchText: '' });
+    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true, searchText: '', iterationPath: '' });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved || filters.searchText;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved || filters.searchText || filters.iterationPath;
 
   if (isLoading) {
     return (
@@ -200,6 +215,7 @@ export function ChildStoryTable({
               <th>Board Column</th>
               <th>Deploy Date</th>
               <th>Target Date</th>
+              <th>Iteration Path</th>
               <th>Parent Feature</th>
             </tr>
           </thead>
@@ -213,6 +229,7 @@ export function ChildStoryTable({
                 <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
               </tr>
             ))}
@@ -324,6 +341,27 @@ export function ChildStoryTable({
             </select>
           </div>
           <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Iteration Path:</label>
+            <select
+              value={filters.iterationPath}
+              onChange={(e) => handleFilterChange('iterationPath', e.target.value)}
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-96"
+            >
+              <option value="">All</option>
+              {uniqueIterationPaths.map(path => (
+                <option key={path} value={path}>{path}</option>
+              ))}
+            </select>
+            {filters.iterationPath && (
+              <button
+                onClick={() => handleFilterChange('iterationPath', '')}
+                className="text-sm text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="hideRemoved"
@@ -390,6 +428,12 @@ export function ChildStoryTable({
                   {getSortIcon('targetDate') && <span className="text-neutral-400">{getSortIcon('targetDate')}</span>}
                 </div>
               </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('iterationPath')}>
+                <div className="flex items-center gap-1">
+                  Iteration Path
+                  {getSortIcon('iterationPath') && <span className="text-neutral-400">{getSortIcon('iterationPath')}</span>}
+                </div>
+              </th>
               <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('parentFeature')}>
                 <div className="flex items-center gap-1">
                   Parent Feature
@@ -401,7 +445,7 @@ export function ChildStoryTable({
           <tbody>
             {filteredAndSortedStories.length === 0 && hasAttemptedFetch ? (
               <tr>
-                <td colSpan={8} className="text-center py-8 text-neutral-500">
+                <td colSpan={9} className="text-center py-8 text-neutral-500">
                   No child User Stories found for the selected Features. This could mean the Features have no children, or the children are not of type 'User Story'.
                 </td>
               </tr>
@@ -437,6 +481,9 @@ export function ChildStoryTable({
                 </td>
                 <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.targetDate, story.status) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.targetDate, story.status) ? 600 : 400 }}>
                   {formatDate(story.targetDate)}
+                </td>
+                <td className="text-neutral-600 text-sm">
+                  {story.iterationPath ?? '—'}
                 </td>
                 <td className="font-mono text-sm text-neutral-600">
                   <a

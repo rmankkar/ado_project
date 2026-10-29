@@ -6,6 +6,7 @@ export interface Feature {
   status: string;
   assignedTo: string | null;
   project: string;
+  iterationPath: string | null;
   url: string;
 }
 
@@ -22,6 +23,7 @@ export interface ChildUserStory {
     title: string;
     url: string;
   };
+  iterationPath: string | null;
   url: string;
 }
 
@@ -65,6 +67,7 @@ export function mapWorkItemToFeature(item: AdoWorkItem, orgUrl: string): Feature
   const fields = item.fields as AdoWorkItemFields;
   const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
   const project = fields['System.TeamProject'] as string;
+  const iterationPath = fields['System.IterationPath'] as string | undefined;
 
   return {
     id: item.id,
@@ -72,6 +75,7 @@ export function mapWorkItemToFeature(item: AdoWorkItem, orgUrl: string): Feature
     status: fields['System.State'] as string,
     assignedTo: assignedTo?.displayName ?? null,
     project,
+    iterationPath: iterationPath ?? null,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }
@@ -168,6 +172,7 @@ export function mapWorkItemToChildStory(
   const fields = item.fields as AdoWorkItemFields;
   const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
   const project = fields['System.TeamProject'] as string;
+  const iterationPath = fields['System.IterationPath'] as string | undefined;
 
   const boardColumnValue = fields[fieldMappings.boardColumn] as string | undefined;
   const deployDateValue = fields[fieldMappings.deployDate] as string | undefined;
@@ -188,6 +193,7 @@ export function mapWorkItemToChildStory(
     deployDate: deployDateValue ?? null,
     targetDate: targetDateValue ?? null,
     parentFeature: parentFeatureWithUrl,
+    iterationPath: iterationPath ?? null,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

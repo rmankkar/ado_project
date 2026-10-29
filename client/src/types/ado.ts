@@ -4,6 +4,7 @@ export interface Feature {
   status: string;
   assignedTo: string | null;
   project: string;
+  iterationPath: string | null;
   url: string;
 }
 
@@ -40,6 +41,7 @@ export interface ChildUserStory {
     title: string;
     url: string;
   };
+  iterationPath: string | null;
   url: string;
   bugs?: Bug[];
 }
@@ -139,7 +141,7 @@ export interface FetchTestCasesResponse {
   errors: FetchError[];
 }
 
-export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'detectedBy' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy' | 'goLive';
+export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'detectedBy' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy' | 'goLive' | 'iterationPath';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {

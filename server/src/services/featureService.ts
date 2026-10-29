@@ -16,6 +16,7 @@ async function fetchWorkItemsByIds(ids: number[]): Promise<Map<number, AdoWorkIt
     getFieldMappings().boardColumn,
     getFieldMappings().deployDate,
     getFieldMappings().targetDate,
+    'System.IterationPath',
   ];
 
   const items = await adoClient.getWorkItems(ids, fields);
