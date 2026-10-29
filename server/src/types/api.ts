@@ -24,6 +24,7 @@ export interface ChildUserStory {
     url: string;
   };
   iterationPath: string | null;
+  storyPoints: number | null;
   url: string;
 }
 
@@ -173,6 +174,7 @@ export function mapWorkItemToChildStory(
   const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
   const project = fields['System.TeamProject'] as string;
   const iterationPath = fields['System.IterationPath'] as string | undefined;
+  const storyPoints = fields['Microsoft.VSTS.Scheduling.StoryPoints'] as number | undefined;
 
   const boardColumnValue = fields[fieldMappings.boardColumn] as string | undefined;
   const deployDateValue = fields[fieldMappings.deployDate] as string | undefined;
@@ -194,6 +196,7 @@ export function mapWorkItemToChildStory(
     targetDate: targetDateValue ?? null,
     parentFeature: parentFeatureWithUrl,
     iterationPath: iterationPath ?? null,
+    storyPoints: storyPoints ?? null,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

@@ -35,6 +35,7 @@ async function fetchWorkItemsByIds(ids: number[]): Promise<Map<number, AdoWorkIt
     getFieldMappings().targetDate,
     'System.AssignedTo',
     'System.Parent',
+    'Microsoft.VSTS.Scheduling.StoryPoints',
   ];
 
   const items = await adoClient.getWorkItems(ids, fields);

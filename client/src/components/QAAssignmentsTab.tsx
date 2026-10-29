@@ -132,6 +132,11 @@ export function QAAssignmentsTab() {
       .sort((a, b) => b.count - a.count);
   }, [userStories]);
 
+  // Compute sum of story points for all user stories
+  const totalStoryPoints = useMemo(() => {
+    return userStories.reduce((sum, us) => sum + (us.storyPoints ?? 0), 0);
+  }, [userStories]);
+
   const allErrors = [...iterationErrors, ...qaUserStoriesErrors];
 
   return (
@@ -244,6 +249,10 @@ export function QAAssignmentsTab() {
               <div className="p-3 bg-red-50 rounded-lg">
                 <div className="text-2xl font-bold text-red-700">{totalChildBugs}</div>
                 <div className="text-sm text-red-600">Open Child Bugs</div>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div className="text-2xl font-bold text-emerald-700">{totalStoryPoints}</div>
+                <div className="text-sm text-emerald-600">Total Story Points</div>
               </div>
 
               {/* Vertical Separator */}

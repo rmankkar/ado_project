@@ -118,6 +118,10 @@ export function QAAssignmentsTable({
           aVal = `${a.parentFeature.id} ${a.parentFeature.title}`.toLowerCase();
           bVal = `${b.parentFeature.id} ${b.parentFeature.title}`.toLowerCase();
           break;
+        case 'storyPoints':
+          aVal = a.storyPoints ?? 0;
+          bVal = b.storyPoints ?? 0;
+          break;
         default:
           return 0;
       }
@@ -150,6 +154,7 @@ export function QAAssignmentsTable({
       { header: 'Board Column', key: 'boardColumn', width: 20 },
       { header: 'Deploy Date', key: 'deployDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
       { header: 'Target Date', key: 'targetDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
+      { header: 'Story Points', key: 'storyPoints', width: 15 },
       { header: 'Parent Feature', key: 'parentFeature', width: 30, render: (v: { id: number; title: string } | null | undefined) => v ? `${v.id} - ${v.title}` : '' },
     ];
 
@@ -165,6 +170,7 @@ export function QAAssignmentsTable({
         boardColumn: story.boardColumn ?? '',
         deployDate: story.deployDate,
         targetDate: story.targetDate,
+        storyPoints: story.storyPoints ?? '',
         parentFeature: story.parentFeature,
       });
 
@@ -180,6 +186,7 @@ export function QAAssignmentsTable({
             boardColumn: bug.boardColumn ?? '',
             deployDate: '',
             targetDate: '',
+            storyPoints: '',
             parentFeature: '',
           });
         });
@@ -273,6 +280,7 @@ export function QAAssignmentsTable({
               <th>Board Column</th>
               <th>Deploy Date</th>
               <th>Target Date</th>
+              <th>Story Points</th>
               <th>Parent Feature</th>
             </tr>
           </thead>
@@ -284,6 +292,7 @@ export function QAAssignmentsTable({
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-32 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
@@ -445,6 +454,12 @@ export function QAAssignmentsTable({
                   {getSortIcon('targetDate') && <span className="text-neutral-400">{getSortIcon('targetDate')}</span>}
                 </div>
               </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('storyPoints')}>
+                <div className="flex items-center gap-1">
+                  Story Points
+                  {getSortIcon('storyPoints') && <span className="text-neutral-400">{getSortIcon('storyPoints')}</span>}
+                </div>
+              </th>
               <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('parentFeature')}>
                 <div className="flex items-center gap-1">
                   Parent Feature
@@ -456,7 +471,7 @@ export function QAAssignmentsTable({
           <tbody>
             {filteredAndSortedStories.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-8 text-neutral-500">
+                <td colSpan={9} className="text-center py-8 text-neutral-500">
                   No QA User Stories found for the selected iteration. This could mean there are no User Stories assigned to QA team members or in 'In Progress(QA)' column.
                 </td>
               </tr>
@@ -521,6 +536,9 @@ export function QAAssignmentsTable({
                     </td>
                     <td style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: isDateInPast(story.targetDate, story.status) ? '#dc2626' : '#4b5563', fontWeight: isDateInPast(story.targetDate, story.status) ? 600 : 400 }}>
                       {formatDate(story.targetDate)}
+                    </td>
+                    <td className="text-neutral-600 text-center font-mono">
+                      {story.storyPoints !== null && story.storyPoints !== undefined ? story.storyPoints : '—'}
                     </td>
                     <td className="font-mono text-sm text-neutral-600">
                       <a

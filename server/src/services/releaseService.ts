@@ -43,6 +43,7 @@ async function fetchWorkItemsByIds(ids: number[]): Promise<Map<number, AdoWorkIt
     'System.Tags',
     'System.Parent',
     'System.IterationPath',
+    'Microsoft.VSTS.Scheduling.StoryPoints',
   ];
 
   const items = await adoClient.getWorkItems(ids, fields);
@@ -94,7 +95,7 @@ function buildUserStoriesQuery(featureIds: number[]): string {
   return `
     SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType], [System.AssignedTo],
            [System.TeamProject], [System.CreatedDate], [System.ChangedDate], [System.Parent],
-           [System.BoardColumn], [Custom.DeployDate], [Microsoft.VSTS.Scheduling.TargetDate], [System.IterationPath]
+           [System.BoardColumn], [Custom.DeployDate], [Microsoft.VSTS.Scheduling.TargetDate], [System.IterationPath], [Microsoft.VSTS.Scheduling.StoryPoints]
     FROM WorkItems
     WHERE [System.WorkItemType] = 'User Story'
       AND [System.Parent] IN (${idsList})
@@ -294,6 +295,7 @@ function mapWorkItemToChildStory(
   const assignedTo = fields['System.AssignedTo'] as { displayName?: string } | undefined;
   const project = fields['System.TeamProject'] as string;
   const iterationPath = fields['System.IterationPath'] as string | undefined;
+  const storyPoints = fields['Microsoft.VSTS.Scheduling.StoryPoints'] as number | undefined;
 
   const boardColumnValue = fields[fieldMappings.boardColumn] as string | undefined;
   const deployDateValue = fields[fieldMappings.deployDate] as string | undefined;
@@ -314,6 +316,7 @@ function mapWorkItemToChildStory(
     targetDate: targetDateValue ?? null,
     parentFeature: parentFeatureWithUrl,
     iterationPath: iterationPath ?? null,
+    storyPoints: storyPoints ?? null,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

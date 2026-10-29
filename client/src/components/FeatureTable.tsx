@@ -369,7 +369,7 @@ export function FeatureTable({
                 </tr>
                 {featureChildStories && hasChildStories(feature.id) && expandedFeatures.has(feature.id) && (
                   <tr key={`${feature.id}-expanded`}>
-                    <td colSpan={6} className="p-0">
+                    <td colSpan={7} className="p-0">
                       <div className="bg-neutral-50 border-t border-neutral-200">
                         <table className="table w-full">
                           <thead>
@@ -381,6 +381,7 @@ export function FeatureTable({
                               <th className="px-4 py-2 text-left">Board Column</th>
                               <th className="px-4 py-2 text-left">Deploy Date</th>
                               <th className="px-4 py-2 text-left">Target Date</th>
+                              <th className="px-4 py-2 text-left">Story Points</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -415,6 +416,9 @@ export function FeatureTable({
                                 </td>
                                 <td className="px-4 py-2 text-sm font-mono" style={{ color: isDateInPast(story.targetDate, story.status) ? '#dc2626' : '#4b5563' }}>
                                   {formatDate(story.targetDate)}
+                                </td>
+                                <td className="px-4 py-2 text-sm text-center font-mono">
+                                  {story.storyPoints !== null && story.storyPoints !== undefined ? story.storyPoints : '—'}
                                 </td>
                               </tr>
                             ))}

@@ -42,6 +42,7 @@ export interface ChildUserStory {
     url: string;
   };
   iterationPath: string | null;
+  storyPoints: number | null;
   url: string;
   bugs?: Bug[];
 }
@@ -141,7 +142,7 @@ export interface FetchTestCasesResponse {
   errors: FetchError[];
 }
 
-export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'detectedBy' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy' | 'goLive' | 'iterationPath';
+export type SortField = 'id' | 'title' | 'status' | 'assignedTo' | 'detectedBy' | 'boardColumn' | 'deployDate' | 'targetDate' | 'parentFeature' | 'severity' | 'priority' | 'createdDate' | 'parentUserStory' | 'automationStatus' | 'complexity' | 'tags' | 'createdBy' | 'goLive' | 'iterationPath' | 'storyPoints';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {

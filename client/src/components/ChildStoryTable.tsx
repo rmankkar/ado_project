@@ -138,6 +138,10 @@ export function ChildStoryTable({
           aVal = (a.iterationPath ?? '').toLowerCase();
           bVal = (b.iterationPath ?? '').toLowerCase();
           break;
+        case 'storyPoints':
+          aVal = a.storyPoints ?? 0;
+          bVal = b.storyPoints ?? 0;
+          break;
         default:
           return 0;
       }
@@ -169,6 +173,7 @@ export function ChildStoryTable({
       { header: 'Deploy Date', key: 'deployDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
       { header: 'Target Date', key: 'targetDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
       { header: 'Iteration Path', key: 'iterationPath', width: 30 },
+      { header: 'Story Points', key: 'storyPoints', width: 15 },
       { header: 'Parent Feature', key: 'parentFeature', width: 30, render: (v: { id: number; title: string } | null | undefined) => v ? `${v.id} - ${v.title}` : '' },
     ];
 
@@ -181,6 +186,7 @@ export function ChildStoryTable({
       deployDate: s.deployDate,
       targetDate: s.targetDate,
       iterationPath: s.iterationPath ?? '',
+      storyPoints: s.storyPoints ?? '',
       parentFeature: s.parentFeature,
     }));
 
@@ -216,6 +222,7 @@ export function ChildStoryTable({
               <th>Deploy Date</th>
               <th>Target Date</th>
               <th>Iteration Path</th>
+              <th>Story Points</th>
               <th>Parent Feature</th>
             </tr>
           </thead>
@@ -230,6 +237,7 @@ export function ChildStoryTable({
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
               </tr>
             ))}
@@ -434,6 +442,12 @@ export function ChildStoryTable({
                   {getSortIcon('iterationPath') && <span className="text-neutral-400">{getSortIcon('iterationPath')}</span>}
                 </div>
               </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('storyPoints')}>
+                <div className="flex items-center gap-1">
+                  Story Points
+                  {getSortIcon('storyPoints') && <span className="text-neutral-400">{getSortIcon('storyPoints')}</span>}
+                </div>
+              </th>
               <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('parentFeature')}>
                 <div className="flex items-center gap-1">
                   Parent Feature
@@ -445,7 +459,7 @@ export function ChildStoryTable({
           <tbody>
             {filteredAndSortedStories.length === 0 && hasAttemptedFetch ? (
               <tr>
-                <td colSpan={9} className="text-center py-8 text-neutral-500">
+                <td colSpan={10} className="text-center py-8 text-neutral-500">
                   No child User Stories found for the selected Features. This could mean the Features have no children, or the children are not of type 'User Story'.
                 </td>
               </tr>
@@ -484,6 +498,9 @@ export function ChildStoryTable({
                 </td>
                 <td className="text-neutral-600 text-sm">
                   {story.iterationPath ?? '—'}
+                </td>
+                <td className="text-neutral-600 text-center font-mono">
+                  {story.storyPoints !== null && story.storyPoints !== undefined ? story.storyPoints : '—'}
                 </td>
                 <td className="font-mono text-sm text-neutral-600">
                   <a
