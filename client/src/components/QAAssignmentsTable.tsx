@@ -3,6 +3,7 @@ import type { ChildUserStory, SortField, SortDirection, Bug } from '../types/ado
 import { getStatusBadgeClass, formatDate, isDateInPast } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
+import { exportToExcel, formatDateForExport } from '../utils/exportToExcel.js';
 
 interface QAAssignmentsTableProps {
   userStories: ChildUserStory[];
@@ -138,6 +139,61 @@ export function QAAssignmentsTable({
     return sortState.direction === 'asc' ? '▲' : '▼';
   };
 
+  const handleExport = () => {
+    // Export main user stories with their bugs as separate rows
+    const columns = [
+      { header: 'Type', key: 'type', width: 15 },
+      { header: 'ID', key: 'id', width: 12 },
+      { header: 'Title', key: 'title', width: 50 },
+      { header: 'Status', key: 'status', width: 18 },
+      { header: 'Assigned To', key: 'assignedTo', width: 25 },
+      { header: 'Board Column', key: 'boardColumn', width: 20 },
+      { header: 'Deploy Date', key: 'deployDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
+      { header: 'Target Date', key: 'targetDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
+      { header: 'Parent Feature', key: 'parentFeature', width: 30, render: (v: { id: number; title: string } | null | undefined) => v ? `${v.id} - ${v.title}` : '' },
+    ];
+
+    const data: any[] = [];
+    filteredAndSortedStories.forEach(story => {
+      // Add user story row
+      data.push({
+        type: 'User Story',
+        id: story.id,
+        title: story.title,
+        status: story.status,
+        assignedTo: story.assignedTo ?? '',
+        boardColumn: story.boardColumn ?? '',
+        deployDate: story.deployDate,
+        targetDate: story.targetDate,
+        parentFeature: story.parentFeature,
+      });
+
+      // Add bug rows if any
+      if (story.bugs && story.bugs.length > 0) {
+        story.bugs.forEach(bug => {
+          data.push({
+            type: 'Bug',
+            id: bug.id,
+            title: bug.title,
+            status: bug.status,
+            assignedTo: bug.assignedTo ?? '',
+            boardColumn: bug.boardColumn ?? '',
+            deployDate: '',
+            targetDate: '',
+            parentFeature: '',
+          });
+        });
+      }
+    });
+
+    exportToExcel({
+      filename: `QAAssignments_Export_${new Date().toISOString().split('T')[0]}`,
+      sheetName: 'QA Assignments',
+      columns,
+      data,
+    });
+  };
+
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -254,6 +310,17 @@ export function QAAssignmentsTable({
         <h2 className="text-lg font-semibold text-neutral-900">
           QA Assignments ({filteredAndSortedStories.length} of {userStories.length})
         </h2>
+        <button
+          onClick={handleExport}
+          className="btn-secondary text-sm"
+          title="Export to Excel"
+          disabled={filteredAndSortedStories.length === 0}
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export
+        </button>
       </div>
 
       {/* Filter Controls */}

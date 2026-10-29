@@ -5,6 +5,7 @@ import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
 import { CommentModal } from './CommentModal.js';
 import { useFetchComments } from '../hooks/useComments.js';
+import { exportToExcel, formatDateForExport } from '../utils/exportToExcel.js';
 
 interface BugTableProps {
   bugs: Bug[];
@@ -187,6 +188,41 @@ export function BugTable({
     return sortState.direction === 'asc' ? '▲' : '▼';
   };
 
+  const handleExport = () => {
+    const columns = [
+      { header: 'ID', key: 'id', width: 12 },
+      { header: 'Title', key: 'title', width: 50 },
+      { header: 'Status', key: 'status', width: 18 },
+      { header: 'Severity', key: 'severity', width: 15 },
+      { header: 'Priority', key: 'priority', width: 10 },
+      { header: 'Assigned To', key: 'assignedTo', width: 25 },
+      { header: 'Detected By', key: 'detectedBy', width: 25 },
+      { header: 'Go Live', key: 'goLive', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
+      { header: 'Created', key: 'createdDate', width: 18, render: (v: string | null | undefined) => formatDateForExport(v) },
+      { header: 'Parent User Story', key: 'parentUserStory', width: 30, render: (v: { id: number; title: string } | null | undefined) => v ? `${v.id} - ${v.title}` : '' },
+    ];
+
+    const data = filteredAndSortedBugs.map(b => ({
+      id: b.id,
+      title: b.title,
+      status: b.status,
+      severity: b.severity ?? '',
+      priority: b.priority ?? '',
+      assignedTo: b.assignedTo ?? '',
+      detectedBy: b.detectedBy ?? '',
+      goLive: b.goLive,
+      createdDate: b.createdDate,
+      parentUserStory: b.parentUserStory,
+    }));
+
+    exportToExcel({
+      filename: `Bugs_Export_${new Date().toISOString().split('T')[0]}`,
+      sheetName: 'Bugs',
+      columns,
+      data,
+    });
+  };
+
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -254,6 +290,17 @@ export function BugTable({
         <h2 className="text-lg font-semibold text-neutral-900">
           Open Bugs ({filteredAndSortedBugs.length} of {bugs.length})
         </h2>
+        <button
+          onClick={handleExport}
+          className="btn-secondary text-sm"
+          title="Export to Excel"
+          disabled={filteredAndSortedBugs.length === 0}
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export
+        </button>
       </div>
 
       {/* Filter Controls */}

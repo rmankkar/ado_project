@@ -3,6 +3,7 @@ import type { ChildUserStory, SortField, SortDirection } from '../types/ado.js';
 import { getStatusBadgeClass, formatDate, isDateInPast } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
+import { exportToExcel, formatDateForExport } from '../utils/exportToExcel.js';
 
 interface ChildStoryTableProps {
   childStories: ChildUserStory[];
@@ -138,6 +139,37 @@ export function ChildStoryTable({
     return sortState.direction === 'asc' ? '▲' : '▼';
   };
 
+  const handleExport = () => {
+    const columns = [
+      { header: 'ID', key: 'id', width: 12 },
+      { header: 'Title', key: 'title', width: 50 },
+      { header: 'Status', key: 'status', width: 18 },
+      { header: 'Assigned To', key: 'assignedTo', width: 25 },
+      { header: 'Board Column', key: 'boardColumn', width: 20 },
+      { header: 'Deploy Date', key: 'deployDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
+      { header: 'Target Date', key: 'targetDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
+      { header: 'Parent Feature', key: 'parentFeature', width: 30, render: (v: { id: number; title: string } | null | undefined) => v ? `${v.id} - ${v.title}` : '' },
+    ];
+
+    const data = filteredAndSortedStories.map(s => ({
+      id: s.id,
+      title: s.title,
+      status: s.status,
+      assignedTo: s.assignedTo ?? '',
+      boardColumn: s.boardColumn ?? '',
+      deployDate: s.deployDate,
+      targetDate: s.targetDate,
+      parentFeature: s.parentFeature,
+    }));
+
+    exportToExcel({
+      filename: `ChildUserStories_Export_${new Date().toISOString().split('T')[0]}`,
+      sheetName: 'Child User Stories',
+      columns,
+      data,
+    });
+  };
+
   const handleFilterChange = (key: keyof FilterState, value: string | boolean) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -200,7 +232,19 @@ export function ChildStoryTable({
         <h2 className="text-lg font-semibold text-neutral-900">
           Child User Stories ({filteredAndSortedStories.length} of {childStories.length})
         </h2>
-        <button
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            className="btn-secondary text-sm"
+            title="Export to Excel"
+            disabled={filteredAndSortedStories.length === 0}
+          >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export
+          </button>
+          <button
           onClick={handleFetch}
           className="btn-secondary"
           disabled={isFetching || !hasSelectedFeatures}
@@ -217,6 +261,7 @@ export function ChildStoryTable({
             'Fetch Child User Stories'
           )}
         </button>
+      </div>
       </div>
 
       {/* Filter Controls */}

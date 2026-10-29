@@ -3,6 +3,7 @@ import type { Feature, ChildUserStory, SortField, SortDirection } from '../types
 import { getStatusBadgeClass, isDateInPast, formatDate } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
+import { exportToExcel } from '../utils/exportToExcel.js';
 
 interface FeatureTableProps {
   features: Feature[];
@@ -79,6 +80,33 @@ export function FeatureTable({
     return sortState.direction === 'asc' ? '▲' : '▼';
   };
 
+  const handleExport = () => {
+    const columns = [
+      { header: 'ID', key: 'id', width: 12 },
+      { header: 'Title', key: 'title', width: 50 },
+      { header: 'Status', key: 'status', width: 18 },
+      { header: 'Assigned To', key: 'assignedTo', width: 25 },
+      { header: 'Project', key: 'project', width: 20 },
+      { header: 'URL', key: 'url', width: 50 },
+    ];
+
+    const data = sortedFeatures.map(f => ({
+      id: f.id,
+      title: f.title,
+      status: f.status,
+      assignedTo: f.assignedTo ?? '',
+      project: f.project,
+      url: f.url,
+    }));
+
+    exportToExcel({
+      filename: `Features_Export_${new Date().toISOString().split('T')[0]}`,
+      sheetName: 'Features',
+      columns,
+      data,
+    });
+  };
+
   const toggleExpand = (featureId: number) => {
     setExpandedFeatures(prev => {
       const next = new Set(prev);
@@ -143,8 +171,20 @@ export function FeatureTable({
         <h2 className="text-lg font-semibold text-neutral-900">
           Features ({features.length})
         </h2>
-        <div className="text-sm text-neutral-500">
-          {selectedIds.size} selected
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-neutral-500">
+            {selectedIds.size} selected
+          </div>
+          <button
+            onClick={handleExport}
+            className="btn-secondary text-sm"
+            title="Export to Excel"
+          >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export
+          </button>
         </div>
       </div>
 

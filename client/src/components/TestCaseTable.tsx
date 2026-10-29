@@ -3,6 +3,7 @@ import type { TestCase, SortField, SortDirection } from '../types/ado.js';
 import { getStatusBadgeClass } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
+import { exportToExcel, sanitizeForExcel } from '../utils/exportToExcel.js';
 
 interface TestCaseTableProps {
   testCases: TestCase[];
@@ -141,6 +142,37 @@ export function TestCaseTable({
     return sortState.direction === 'asc' ? '▲' : '▼';
   };
 
+  const handleExport = () => {
+    const columns = [
+      { header: 'ID', key: 'id', width: 12 },
+      { header: 'Title', key: 'title', width: 50 },
+      { header: 'Status', key: 'status', width: 18 },
+      { header: 'Complexity', key: 'complexity', width: 15 },
+      { header: 'Tags', key: 'tags', width: 30, render: (v: string | null | undefined) => sanitizeForExcel(v) },
+      { header: 'Assigned To', key: 'assignedTo', width: 25 },
+      { header: 'Created By', key: 'createdBy', width: 25 },
+      { header: 'Parent User Stories', key: 'parentUserStories', width: 40, render: (v: { id: number; title: string }[] | null | undefined) => v?.map((p) => `${p.id} - ${p.title}`).join(', ') ?? '' },
+    ];
+
+    const data = filteredAndSortedTestCases.map(tc => ({
+      id: tc.id,
+      title: tc.title,
+      status: tc.status,
+      complexity: tc.complexity ?? '',
+      tags: tc.tags ?? '',
+      assignedTo: tc.assignedTo ?? '',
+      createdBy: tc.createdBy ?? '',
+      parentUserStories: tc.parentUserStories,
+    }));
+
+    exportToExcel({
+      filename: `TestCases_Export_${new Date().toISOString().split('T')[0]}`,
+      sheetName: 'Test Cases',
+      columns,
+      data,
+    });
+  };
+
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -201,6 +233,17 @@ export function TestCaseTable({
         <h2 className="text-lg font-semibold text-neutral-900">
           Test Cases ({filteredAndSortedTestCases.length} of {testCases.length})
         </h2>
+        <button
+          onClick={handleExport}
+          className="btn-secondary text-sm"
+          title="Export to Excel"
+          disabled={filteredAndSortedTestCases.length === 0}
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export
+        </button>
       </div>
 
       {/* Filter Controls */}
