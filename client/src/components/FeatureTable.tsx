@@ -215,50 +215,48 @@ export function FeatureTable({
         </div>
       </div>
 
-      {/* Title Search Filter */}
+      {/* Title Search Filter & Iteration Path Filter */}
       <div className="mb-3">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700">Search Title:</label>
-          <input
-            type="text"
-            value={titleFilter}
-            onChange={(e) => setTitleFilter(e.target.value)}
-            placeholder="Search feature title..."
-            className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-64"
-          />
-          {titleFilter && (
-            <button
-              onClick={() => setTitleFilter('')}
-              className="text-sm text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Search Title:</label>
+            <input
+              type="text"
+              value={titleFilter}
+              onChange={(e) => setTitleFilter(e.target.value)}
+              placeholder="Search feature title..."
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-64"
+            />
+            {titleFilter && (
+              <button
+                onClick={() => setTitleFilter('')}
+                className="text-sm text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Iteration Path:</label>
+            <select
+              value={iterationPathFilter}
+              onChange={(e) => setIterationPathFilter(e.target.value)}
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-96"
             >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Iteration Path Filter */}
-      <div className="mb-3">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700">Iteration Path:</label>
-          <select
-            value={iterationPathFilter}
-            onChange={(e) => setIterationPathFilter(e.target.value)}
-            className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-96"
-          >
-            <option value="">All</option>
-            {uniqueIterationPaths.map(path => (
-              <option key={path} value={path}>{path}</option>
-            ))}
-          </select>
-          {iterationPathFilter && (
-            <button
-              onClick={() => setIterationPathFilter('')}
-              className="text-sm text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
-            >
-              Clear
-            </button>
-          )}
+              <option value="">All</option>
+              {uniqueIterationPaths.map(path => (
+                <option key={path} value={path}>{path}</option>
+              ))}
+            </select>
+            {iterationPathFilter && (
+              <button
+                onClick={() => setIterationPathFilter('')}
+                className="text-sm text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -192,6 +192,55 @@ function App() {
     return insightChildStories.filter(s => s.boardColumn?.toLowerCase() === 'po review').length;
   }, [insightChildStories]);
 
+  // Story points sum for each board column
+  const newColumnStoryPoints = useMemo(() => {
+    return insightChildStories
+      .filter(s => s.boardColumn?.toLowerCase() === 'new')
+      .reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+  }, [insightChildStories]);
+
+  const blockedColumnStoryPoints = useMemo(() => {
+    return insightChildStories
+      .filter(s => s.boardColumn?.toLowerCase() === 'blocked')
+      .reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+  }, [insightChildStories]);
+
+  const inProgressQaColumnStoryPoints = useMemo(() => {
+    return insightChildStories
+      .filter(s => s.boardColumn?.toLowerCase() === 'in progress(qa)')
+      .reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+  }, [insightChildStories]);
+
+  const committedColumnStoryPoints = useMemo(() => {
+    return insightChildStories
+      .filter(s => s.boardColumn?.toLowerCase() === 'committed')
+      .reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+  }, [insightChildStories]);
+
+  const backlogColumnStoryPoints = useMemo(() => {
+    return insightChildStories
+      .filter(s => s.boardColumn?.toLowerCase() === 'backlog')
+      .reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+  }, [insightChildStories]);
+
+  const inProgressDevColumnStoryPoints = useMemo(() => {
+    return insightChildStories
+      .filter(s => s.boardColumn?.toLowerCase() === 'in progress (dev)')
+      .reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+  }, [insightChildStories]);
+
+  const closedColumnStoryPoints = useMemo(() => {
+    return insightChildStories
+      .filter(s => s.boardColumn?.toLowerCase() === 'closed')
+      .reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+  }, [insightChildStories]);
+
+  const poReviewColumnStoryPoints = useMemo(() => {
+    return insightChildStories
+      .filter(s => s.boardColumn?.toLowerCase() === 'po review')
+      .reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+  }, [insightChildStories]);
+
   const totalChildStories = insightChildStories.length;
 
   const allErrors = [...fetchErrors, ...childStoryErrors];
@@ -255,51 +304,85 @@ function App() {
                 {/* Insights Section for Child User Stories - moved above Feature Table */}
                 {totalChildStories > 0 && (
                   <div className="card p-4 mb-6">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary-50 rounded-lg">
-                          <div className="text-2xl font-bold text-primary-700">{totalChildStories}</div>
-                          <div className="text-sm text-primary-600">Total Child User Stories</div>
-                        </div>
-                        <div className="p-3 bg-green-50 rounded-lg">
-                          <div className="text-2xl font-bold text-green-700">{combinedFeatures.length}</div>
-                          <div className="text-sm text-green-600">Parent Features</div>
-                        </div>
+                    {/* Row 1: Total Child US & Parent Features */}
+                    <div className="grid grid-cols-2 gap-2 w-full md:w-auto mb-4">
+                      <div className="p-3 bg-primary-50 rounded-lg border border-primary-100 text-center">
+                        <div className="text-2xl font-bold text-primary-700">{totalChildStories}</div>
+                        <div className="text-sm text-primary-600">Total Child User Stories</div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        {/* Board Column Count Boxes */}
-                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                          <div className="text-2xl font-bold text-blue-700">{newColumnCount}</div>
-                          <div className="text-sm text-blue-600">Board Column: New</div>
-                        </div>
-                        <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
-                          <div className="text-2xl font-bold text-amber-700">{blockedColumnCount}</div>
-                          <div className="text-sm text-amber-600">Board Column: Blocked</div>
-                        </div>
-                        <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
-                          <div className="text-2xl font-bold text-purple-700">{inProgressQaColumnCount}</div>
-                          <div className="text-sm text-purple-600">Board Column: In Progress(QA)</div>
-                        </div>
-                        <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                          <div className="text-2xl font-bold text-indigo-700">{committedColumnCount}</div>
-                          <div className="text-sm text-indigo-600">Board Column: Committed</div>
-                        </div>
-                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                          <div className="text-2xl font-bold text-slate-700">{backlogColumnCount}</div>
-                          <div className="text-sm text-slate-600">Board Column: Backlog</div>
-                        </div>
-                        <div className="p-3 bg-teal-50 rounded-lg border border-teal-100">
-                          <div className="text-2xl font-bold text-teal-700">{inProgressDevColumnCount}</div>
-                          <div className="text-sm text-teal-600">Board Column: In Progress(DEV)</div>
-                        </div>
-                        <div className="p-3 bg-red-50 rounded-lg border border-red-100">
-                          <div className="text-2xl font-bold text-red-700">{closedColumnCount}</div>
-                          <div className="text-sm text-red-600">Board Column: Closed</div>
-                        </div>
-                        <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
-                          <div className="text-2xl font-bold text-orange-700">{poReviewColumnCount}</div>
-                          <div className="text-sm text-orange-600">Board Column: PO Review</div>
-                        </div>
+                      <div className="p-3 bg-green-50 rounded-lg border border-green-100 text-center">
+                        <div className="text-2xl font-bold text-green-700">{combinedFeatures.length}</div>
+                        <div className="text-sm text-green-600">Parent Features</div>
+                      </div>
+                    </div>
+                    {/* Row 2: Board Column Count Boxes - Grid for consistent alignment */}
+                    <div className="grid grid-cols-8 gap-2 w-full md:w-auto mb-4">
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-center">
+                        <div className="text-2xl font-bold text-blue-700">{newColumnCount}</div>
+                        <div className="text-sm text-blue-600">New</div>
+                      </div>
+                      <div className="p-3 bg-amber-50 rounded-lg border border-amber-100 text-center">
+                        <div className="text-2xl font-bold text-amber-700">{blockedColumnCount}</div>
+                        <div className="text-sm text-amber-600">Blocked</div>
+                      </div>
+                      <div className="p-3 bg-purple-50 rounded-lg border border-purple-100 text-center">
+                        <div className="text-2xl font-bold text-purple-700">{inProgressQaColumnCount}</div>
+                        <div className="text-sm text-purple-600">In Progress(QA)</div>
+                      </div>
+                      <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100 text-center">
+                        <div className="text-2xl font-bold text-indigo-700">{committedColumnCount}</div>
+                        <div className="text-sm text-indigo-600">Committed</div>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-center">
+                        <div className="text-2xl font-bold text-slate-700">{backlogColumnCount}</div>
+                        <div className="text-sm text-slate-600">Backlog</div>
+                      </div>
+                      <div className="p-3 bg-teal-50 rounded-lg border border-teal-100 text-center">
+                        <div className="text-2xl font-bold text-teal-700">{inProgressDevColumnCount}</div>
+                        <div className="text-sm text-teal-600">In Progress(DEV)</div>
+                      </div>
+                      <div className="p-3 bg-red-50 rounded-lg border border-red-100 text-center">
+                        <div className="text-2xl font-bold text-red-700">{closedColumnCount}</div>
+                        <div className="text-sm text-red-600">Closed</div>
+                      </div>
+                      <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 text-center">
+                        <div className="text-2xl font-bold text-orange-700">{poReviewColumnCount}</div>
+                        <div className="text-sm text-orange-600">PO Review</div>
+                      </div>
+                    </div>
+                    {/* Row 3: Story Points Sum Row - Same Grid Layout */}
+                    <div className="grid grid-cols-8 gap-2 w-full md:w-auto pt-4 border-t border-neutral-200">
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-center">
+                        <div className="text-2xl font-bold text-blue-700">{newColumnStoryPoints}</div>
+                        <div className="text-sm text-blue-600">SP Sum: New</div>
+                      </div>
+                      <div className="p-3 bg-amber-50 rounded-lg border border-amber-100 text-center">
+                        <div className="text-2xl font-bold text-amber-700">{blockedColumnStoryPoints}</div>
+                        <div className="text-sm text-amber-600">SP Sum: Blocked</div>
+                      </div>
+                      <div className="p-3 bg-purple-50 rounded-lg border border-purple-100 text-center">
+                        <div className="text-2xl font-bold text-purple-700">{inProgressQaColumnStoryPoints}</div>
+                        <div className="text-sm text-purple-600">SP Sum: In Progress(QA)</div>
+                      </div>
+                      <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100 text-center">
+                        <div className="text-2xl font-bold text-indigo-700">{committedColumnStoryPoints}</div>
+                        <div className="text-sm text-indigo-600">SP Sum: Committed</div>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-center">
+                        <div className="text-2xl font-bold text-slate-700">{backlogColumnStoryPoints}</div>
+                        <div className="text-sm text-slate-600">SP Sum: Backlog</div>
+                      </div>
+                      <div className="p-3 bg-teal-50 rounded-lg border border-teal-100 text-center">
+                        <div className="text-2xl font-bold text-teal-700">{inProgressDevColumnStoryPoints}</div>
+                        <div className="text-sm text-teal-600">SP Sum: In Progress(DEV)</div>
+                      </div>
+                      <div className="p-3 bg-red-50 rounded-lg border border-red-100 text-center">
+                        <div className="text-2xl font-bold text-red-700">{closedColumnStoryPoints}</div>
+                        <div className="text-sm text-red-600">SP Sum: Closed</div>
+                      </div>
+                      <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 text-center">
+                        <div className="text-2xl font-bold text-orange-700">{poReviewColumnStoryPoints}</div>
+                        <div className="text-sm text-orange-600">SP Sum: PO Review</div>
                       </div>
                     </div>
                   </div>
