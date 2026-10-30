@@ -74,12 +74,13 @@ export function TestCaseTable({
     if (filters.complexity) {
       result = result.filter(s => s.complexity === filters.complexity);
     }
-    // Apply search text filter (case-insensitive search on title and tags)
+    // Apply search text filter (case-insensitive search on title, tags, or ID)
     if (filters.searchText) {
       const searchLower = filters.searchText.toLowerCase();
       result = result.filter(s =>
         s.title.toLowerCase().includes(searchLower) ||
-        (s.tags && s.tags.toLowerCase().includes(searchLower))
+        (s.tags && s.tags.toLowerCase().includes(searchLower)) ||
+        s.id.toString().includes(searchLower)
       );
     }
 
@@ -255,7 +256,7 @@ export function TestCaseTable({
               type="text"
               value={filters.searchText}
               onChange={(e) => handleFilterChange('searchText', e.target.value)}
-              placeholder="Search test case title..."
+              placeholder="Search title or ID..."
               className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-64"
             />
           </div>

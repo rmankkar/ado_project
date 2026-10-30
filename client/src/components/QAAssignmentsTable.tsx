@@ -73,10 +73,10 @@ export function QAAssignmentsTable({
     if (filters.parentFeature) {
       result = result.filter(s => `${s.parentFeature.id} - ${s.parentFeature.title}` === filters.parentFeature);
     }
-    // Apply search text filter (case-insensitive search on title)
+    // Apply search text filter (case-insensitive search on title or ID)
     if (filters.searchText) {
       const searchLower = filters.searchText.toLowerCase();
-      result = result.filter(s => s.title.toLowerCase().includes(searchLower));
+      result = result.filter(s => s.title.toLowerCase().includes(searchLower) || s.id.toString().includes(searchLower));
     }
 
     // Apply sorting
@@ -341,7 +341,7 @@ export function QAAssignmentsTable({
               type="text"
               value={filters.searchText}
               onChange={(e) => handleFilterChange('searchText', e.target.value)}
-              placeholder="Search user story title..."
+              placeholder="Search title or ID..."
               className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-64"
             />
           </div>

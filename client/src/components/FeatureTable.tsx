@@ -44,10 +44,10 @@ export function FeatureTable({
     const { field, direction } = sortState;
     let result = [...features];
 
-    // Apply title filter
+    // Apply title filter (search by title or ID)
     if (titleFilter) {
       const filterLower = titleFilter.toLowerCase();
-      result = result.filter(f => f.title.toLowerCase().includes(filterLower));
+      result = result.filter(f => f.title.toLowerCase().includes(filterLower) || f.id.toString().includes(filterLower));
     }
 
     // Apply iteration path filter
@@ -224,7 +224,7 @@ export function FeatureTable({
               type="text"
               value={titleFilter}
               onChange={(e) => setTitleFilter(e.target.value)}
-              placeholder="Search feature title..."
+              placeholder="Search title or ID..."
               className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-64"
             />
             {titleFilter && (
