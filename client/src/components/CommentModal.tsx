@@ -4,8 +4,8 @@ import { formatDate, stripHtml } from '../utils/formatters.js';
 interface CommentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  bugId: number;
-  bugTitle: string;
+  workItemId: number;
+  workItemTitle: string;
   comments: Comment[];
   isLoading: boolean;
 }
@@ -13,8 +13,8 @@ interface CommentModalProps {
 export function CommentModal({
   isOpen,
   onClose,
-  bugId,
-  bugTitle,
+  workItemId,
+  workItemTitle,
   comments,
   isLoading,
 }: CommentModalProps) {
@@ -40,10 +40,10 @@ export function CommentModal({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-neutral-200">
             <h2 id="modal-title" className="text-lg font-semibold text-neutral-900">
-              Comments for Bug #{bugId}
+              Comments for #{workItemId}
             </h2>
-            <p className="text-sm text-neutral-500 truncate max-w-md ml-4" title={bugTitle}>
-              {bugTitle}
+            <p className="text-sm text-neutral-500 truncate max-w-md ml-4" title={workItemTitle}>
+              {workItemTitle}
             </p>
             <button
               onClick={onClose}
@@ -68,7 +68,7 @@ export function CommentModal({
                 <svg className="w-12 h-12 mx-auto text-neutral-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <p>No comments found for this bug.</p>
+                <p>No comments found.</p>
               </div>
             ) : (
               <div className="space-y-4">

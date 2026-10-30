@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import type { ChildUserStory, SortField, SortDirection, Bug } from '../types/ado.js';
+import type { ChildUserStory, SortField, SortDirection, Bug, Comment, FetchCommentsResponse } from '../types/ado.js';
 import { getStatusBadgeClass, formatDate, isDateInPast } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
+import { CommentModal } from './CommentModal.js';
+import { useFetchComments } from '../hooks/useComments.js';
 import { exportToExcel, formatDateForExport } from '../utils/exportToExcel.js';
 
 interface QAAssignmentsTableProps {
@@ -37,6 +39,34 @@ export function QAAssignmentsTable({
     searchText: '',
   });
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<{ id: number; title: string; type: 'us' | 'bug' } | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+
+  const fetchCommentsMutation = useFetchComments({
+    onSuccess: (data: FetchCommentsResponse) => {
+      setComments(data.comments);
+      setIsLoadingComments(false);
+    },
+    onError: (error: Error) => {
+      console.error('Failed to fetch comments:', error);
+      setComments([]);
+      setIsLoadingComments(false);
+    },
+  });
+
+  const handleOpenComments = (item: { id: number; title: string; type: 'us' | 'bug' }) => {
+    setSelectedItem(item);
+    setComments([]);
+    setIsLoadingComments(true);
+    fetchCommentsMutation.mutate(item.id);
+  };
+
+  const handleCloseComments = () => {
+    setSelectedItem(null);
+    setComments([]);
+    fetchCommentsMutation.reset();
+  };
 
   // Get unique values for filter dropdowns
   const uniqueStatuses = useMemo((): string[] =>
@@ -227,7 +257,7 @@ export function QAAssignmentsTable({
     if (bugs.length === 0) {
       return [
         <tr key="no-bugs" className="bg-neutral-100">
-          <td colSpan={8} className="px-4 py-3 text-center text-neutral-500 text-sm">
+          <td colSpan={10} className="px-4 py-3 text-center text-neutral-500 text-sm">
             No active bugs linked to this User Story
           </td>
         </tr>
@@ -263,6 +293,17 @@ export function QAAssignmentsTable({
         <td className="px-4 py-2 text-sm text-neutral-600"></td>
         <td className="px-4 py-2 text-sm text-neutral-600"></td>
         <td className="px-4 py-2 text-sm text-neutral-600"></td>
+        <td className="px-4 py-2 text-sm text-neutral-600"></td>
+        <td className="text-center">
+          <button
+            onClick={() => handleOpenComments({ id: bug.id, title: bug.title, type: 'bug' })}
+            className="text-2xl hover:text-primary-600 transition-colors p-1"
+            aria-label={`View comments for bug ${bug.id}`}
+            title="View comments"
+          >
+            💬
+          </button>
+        </td>
       </tr>
     ));
   };
@@ -314,6 +355,7 @@ export function QAAssignmentsTable({
   }
 
   return (
+    <>
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-neutral-900">
@@ -466,6 +508,7 @@ export function QAAssignmentsTable({
                   {getSortIcon('parentFeature') && <span className="text-neutral-400">{getSortIcon('parentFeature')}</span>}
                 </div>
               </th>
+              <th scope="col">Comments</th>
             </tr>
           </thead>
           <tbody>
@@ -551,6 +594,16 @@ export function QAAssignmentsTable({
                         {story.parentFeature.id}
                       </a>
                     </td>
+                    <td className="text-center">
+                      <button
+                        onClick={() => handleOpenComments({ id: story.id, title: story.title, type: 'us' })}
+                        className="text-2xl hover:text-primary-600 transition-colors p-1"
+                        aria-label={`View comments for user story ${story.id}`}
+                        title="View comments"
+                      >
+                        💬
+                      </button>
+                    </td>
                   </tr>,
                 ];
 
@@ -566,5 +619,15 @@ export function QAAssignmentsTable({
         </table>
       </div>
     </div>
+
+      <CommentModal
+        isOpen={selectedItem !== null}
+        onClose={handleCloseComments}
+        workItemId={selectedItem?.id ?? 0}
+        workItemTitle={selectedItem?.title ?? ''}
+        comments={comments}
+        isLoading={isLoadingComments}
+      />
+    </>
   );
 }

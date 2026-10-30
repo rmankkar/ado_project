@@ -549,8 +549,8 @@ export function BugTable({
       <CommentModal
         isOpen={selectedBug !== null}
         onClose={handleCloseComments}
-        bugId={selectedBug?.id ?? 0}
-        bugTitle={selectedBug?.title ?? ''}
+        workItemId={selectedBug?.id ?? 0}
+        workItemTitle={selectedBug?.title ?? ''}
         comments={comments}
         isLoading={isLoadingComments}
       />
