@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import type { ChildUserStory, SortField, SortDirection } from '../types/ado.js';
+import type { ChildUserStory, SortField, SortDirection, Comment, FetchCommentsResponse } from '../types/ado.js';
 import { getStatusBadgeClass, formatDate, isDateInPast } from '../utils/formatters.js';
 import { LoadingSpinner } from './LoadingSpinner.js';
 import { InfoAlert } from './ErrorAlert.js';
+import { CommentModal } from './CommentModal.js';
+import { useFetchComments } from '../hooks/useComments.js';
 import { exportToExcel, formatDateForExport } from '../utils/exportToExcel.js';
 
 interface ChildStoryTableProps {
@@ -43,6 +45,34 @@ export function ChildStoryTable({
     searchText: '',
     iterationPath: '',
   });
+  const [selectedItem, setSelectedItem] = useState<{ id: number; title: string; type: 'us' } | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+
+  const fetchCommentsMutation = useFetchComments({
+    onSuccess: (data: FetchCommentsResponse) => {
+      setComments(data.comments);
+      setIsLoadingComments(false);
+    },
+    onError: (error: Error) => {
+      console.error('Failed to fetch comments:', error);
+      setComments([]);
+      setIsLoadingComments(false);
+    },
+  });
+
+  const handleOpenComments = (item: { id: number; title: string; type: 'us' }) => {
+    setSelectedItem(item);
+    setComments([]);
+    setIsLoadingComments(true);
+    fetchCommentsMutation.mutate(item.id);
+  };
+
+  const handleCloseComments = () => {
+    setSelectedItem(null);
+    setComments([]);
+    fetchCommentsMutation.reset();
+  };
 
   const handleFetch = () => {
     setHasAttemptedFetch(true);
@@ -224,6 +254,7 @@ export function ChildStoryTable({
               <th>Iteration Path</th>
               <th>Story Points</th>
               <th>Parent Feature</th>
+              <th>Comments</th>
             </tr>
           </thead>
           <tbody>
@@ -239,6 +270,7 @@ export function ChildStoryTable({
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-12 animate-pulse" /></td>
               </tr>
             ))}
           </tbody>
@@ -259,6 +291,7 @@ export function ChildStoryTable({
   // Show table with button when features selected (regardless of childStories)
   // "No results" message goes in tbody after fetch attempted
   return (
+    <>
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-neutral-900">
@@ -454,12 +487,13 @@ export function ChildStoryTable({
                   {getSortIcon('parentFeature') && <span className="text-neutral-400">{getSortIcon('parentFeature')}</span>}
                 </div>
               </th>
+              <th scope="col">Comments</th>
             </tr>
           </thead>
           <tbody>
             {filteredAndSortedStories.length === 0 && hasAttemptedFetch ? (
               <tr>
-                <td colSpan={10} className="text-center py-8 text-neutral-500">
+                <td colSpan={11} className="text-center py-8 text-neutral-500">
                   No child User Stories found for the selected Features. This could mean the Features have no children, or the children are not of type 'User Story'.
                 </td>
               </tr>
@@ -513,11 +547,31 @@ export function ChildStoryTable({
                     {story.parentFeature.id}
                   </a>
                 </td>
+                <td className="text-center">
+                  <button
+                    onClick={() => handleOpenComments({ id: story.id, title: story.title, type: 'us' })}
+                    className="text-2xl hover:text-primary-600 transition-colors p-1"
+                    aria-label={`View comments for user story ${story.id}`}
+                    title="View comments"
+                  >
+                    💬
+                  </button>
+                </td>
               </tr>
             )))}
           </tbody>
         </table>
       </div>
     </div>
+
+      <CommentModal
+        isOpen={selectedItem !== null}
+        onClose={handleCloseComments}
+        workItemId={selectedItem?.id ?? 0}
+        workItemTitle={selectedItem?.title ?? ''}
+        comments={comments}
+        isLoading={isLoadingComments}
+      />
+    </>
   );
 }
