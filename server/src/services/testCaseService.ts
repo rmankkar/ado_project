@@ -35,6 +35,22 @@ function buildTestCasesQuery(iterationPath: string): string {
   `;
 }
 
+function buildAllTestCasesQuery(): string {
+  const escapedAreaPath = 'Global_Data_Project\\B2B\\B2B Blackhawks'.replace(/'/g, "''");
+  return `
+    SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType],
+           [System.AssignedTo], [System.TeamProject], [System.BoardColumn],
+           [System.CreatedDate], [System.ChangedDate],
+           [Microsoft.VSTS.TCM.AutomationStatus], [Microsoft.VSTS.Common.Priority]
+    FROM WorkItemLinks
+    WHERE [Source].[System.areaPath] UNDER '${escapedAreaPath}'
+      AND [Source].[System.WorkItemType] = '${WORK_ITEM_TYPE_USER_STORY}'
+      AND [System.Links.LinkType] = '${TESTED_BY_LINK_TYPE}'
+      AND [Target].[System.WorkItemType] = '${WORK_ITEM_TYPE_TEST_CASE}'
+    ORDER BY [Target].[System.Id]
+  `;
+}
+
 function classifyError(status: number | undefined, id: number): FetchError {
   if (status === 404) {
     return { id, message: 'Work item not found', type: 'not_found' };
@@ -103,13 +119,12 @@ export async function fetchTestCases(iterationPath: string): Promise<FetchTestCa
   const testCases: TestCase[] = [];
   const errors: FetchError[] = [];
 
-  if (!iterationPath) {
-    return { testCases, errors };
-  }
-
   try {
-    // Run WIQL to get Test Cases linked to User Stories in the iteration via TestedBy relation
-    const query = buildTestCasesQuery(iterationPath);
+    // Run WIQL to get Test Cases linked to User Stories.
+    // When iterationPath is empty, fetch test cases from all sprints (no iteration filter).
+    const query = iterationPath
+      ? buildTestCasesQuery(iterationPath)
+      : buildAllTestCasesQuery();
     console.log('[DEBUG] Test Case WIQL Query:', query);
     const wiqlResult = await adoClient.runWiql(query);
     console.log('[DEBUG] Test Case WIQL Result workItemRelations count:', wiqlResult.workItemRelations.length);

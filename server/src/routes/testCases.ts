@@ -6,7 +6,8 @@ import type { FetchTestCasesResponse } from '../types/api.js';
 
 const fetchTestCasesSchema = z.object({
   body: z.object({
-    iterationPath: z.string().min(1, 'Iteration path is required'),
+    // Empty iterationPath means "All Sprints" — fetch test cases from all iterations
+    iterationPath: z.string(),
   }),
 });
 

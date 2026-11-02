@@ -27,7 +27,9 @@ export function TestCaseReviewTab() {
   };
 
   const handleFetchTestCases = () => {
-    fetchTestCasesMutation.mutate(selectedIterationPath);
+    // "All Sprints" means fetch test cases from all iterations (no iteration filter)
+    const iterationPath = selectedIterationPath === 'All Sprints' ? '' : selectedIterationPath;
+    fetchTestCasesMutation.mutate(iterationPath);
   };
 
   const handleSort = (field: SortField) => {
@@ -124,6 +126,7 @@ export function TestCaseReviewTab() {
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:cursor-not-allowed appearance-none pr-10"
               >
                 <option value="">-- Select an Iteration --</option>
+                <option value="All Sprints">All Sprints</option>
                 {iterations.map(iteration => (
                   <option key={iteration.path} value={iteration.path}>
                     {iteration.path} {iteration.startDate && iteration.finishDate ? `(${formatDate(iteration.startDate)} - ${formatDate(iteration.finishDate)})` : ''}
