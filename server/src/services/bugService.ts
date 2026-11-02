@@ -1,6 +1,6 @@
 import { adoClient } from './adoClient.js';
 import { getFieldMappings } from './fieldMapping.js';
-import { mapWorkItemToBug } from '../types/api.js';
+import { mapWorkItemToBug, mapAdoCommentToComment } from '../types/api.js';
 import { DEFAULT_FIELDS } from '../utils/adoUrls.js';
 import { env } from '../config/env.js';
 import type { Bug, FetchError } from '../types/api.js';
@@ -129,6 +129,25 @@ export async function fetchBugs(iterationPath: string): Promise<FetchBugsResult>
     const bugItemsMap = await fetchWorkItemsByIds(bugIds);
     console.log('[DEBUG] Bug items fetched:', bugItemsMap.size);
 
+    // Fetch comments for each bug to compute lastCommentDate
+    const bugLastCommentDates = new Map<number, string | null>();
+    for (const bugId of bugIds) {
+      try {
+        const adoComments = await adoClient.getWorkItemComments(bugId);
+        const comments = adoComments.map(mapAdoCommentToComment);
+        if (comments.length === 0) {
+          bugLastCommentDates.set(bugId, null);
+        } else {
+          const sorted = [...comments].sort((a, b) =>
+            new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+          );
+          bugLastCommentDates.set(bugId, sorted[0].createdDate);
+        }
+      } catch {
+        bugLastCommentDates.set(bugId, null);
+      }
+    }
+
     // Collect parent IDs from the bugs (System.Parent field)
     const parentIds: number[] = [];
     for (const bugItem of bugItemsMap.values()) {
@@ -168,7 +187,8 @@ export async function fetchBugs(iterationPath: string): Promise<FetchBugsResult>
         bugItem,
         process.env.ADO_ORG_URL ?? '',
         parentInfo,
-        getFieldMappings()
+        getFieldMappings(),
+        bugLastCommentDates.get(bugItem.id) ?? null
       );
       bugs.push(bug);
     }

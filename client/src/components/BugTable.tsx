@@ -22,6 +22,7 @@ interface FilterState {
   goLive: string;
   severity: string;
   searchText: string;
+  lastCommentFilter: boolean;
 }
 
 export function BugTable({
@@ -39,6 +40,7 @@ export function BugTable({
     goLive: '',
     severity: '',
     searchText: '',
+    lastCommentFilter: false,
   });
 
   // Modal state for comments
@@ -118,6 +120,15 @@ export function BugTable({
     if (filters.searchText) {
       const searchLower = filters.searchText.toLowerCase();
       result = result.filter(s => s.title.toLowerCase().includes(searchLower) || s.id.toString().includes(searchLower));
+    }
+    // Apply "last comment > 4 days ago" filter (includes bugs with no comments)
+    if (filters.lastCommentFilter) {
+      const fourDaysAgo = Date.now() - 4 * 24 * 60 * 60 * 1000;
+      result = result.filter(b => {
+        const lastCommentDate = b.lastCommentDate;
+        if (!lastCommentDate) return true;
+        return new Date(lastCommentDate).getTime() < fourDaysAgo;
+      });
     }
 
     // Apply sorting
@@ -223,15 +234,15 @@ export function BugTable({
     });
   };
 
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
+  const handleFilterChange = (key: keyof FilterState, value: string | boolean) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', detectedBy: '', goLive: '', severity: '', searchText: '' });
+    setFilters({ status: '', assignedTo: '', detectedBy: '', goLive: '', severity: '', searchText: '', lastCommentFilter: false });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.detectedBy || filters.goLive || filters.severity || filters.searchText;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.detectedBy || filters.goLive || filters.severity || filters.searchText || filters.lastCommentFilter;
 
   if (isLoading) {
     return (
@@ -380,6 +391,18 @@ export function BugTable({
                 <option key={goLive} value={goLive}>{goLive}</option>
               ))}
             </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="lastCommentFilter"
+              checked={filters.lastCommentFilter}
+              onChange={(e) => handleFilterChange('lastCommentFilter', e.target.checked)}
+              className="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+            />
+            <label htmlFor="lastCommentFilter" className="text-sm text-neutral-700">
+              Last comment &gt; 4 days ago (includes no comments)
+            </label>
           </div>
           {hasActiveFilters && (
             <button

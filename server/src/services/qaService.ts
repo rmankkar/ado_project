@@ -1,6 +1,6 @@
 import { adoClient } from './adoClient.js';
 import { getFieldMappings } from './fieldMapping.js';
-import { mapWorkItemToChildStory, mapWorkItemToBug } from '../types/api.js';
+import { mapWorkItemToChildStory, mapWorkItemToBug, mapAdoCommentToComment } from '../types/api.js';
 import { DEFAULT_FIELDS } from '../utils/adoUrls.js';
 import { env } from '../config/env.js';
 import type { FetchError, Bug, QaUserStoryWithBugs } from '../types/api.js';
@@ -121,6 +121,25 @@ export async function fetchQaUserStories(iterationPath: string): Promise<FetchQa
     const userStoryItemsMap = await fetchWorkItemsByIds(userStoryIds);
     console.log('[DEBUG] QA User Story items fetched:', userStoryItemsMap.size);
 
+    // Fetch comments for each QA user story to compute lastCommentDate
+    const userStoryLastCommentDates = new Map<number, string | null>();
+    for (const userStoryId of userStoryIds) {
+      try {
+        const adoComments = await adoClient.getWorkItemComments(userStoryId);
+        const comments = adoComments.map(mapAdoCommentToComment);
+        if (comments.length === 0) {
+          userStoryLastCommentDates.set(userStoryId, null);
+        } else {
+          const sorted = [...comments].sort((a, b) =>
+            new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+          );
+          userStoryLastCommentDates.set(userStoryId, sorted[0].createdDate);
+        }
+      } catch {
+        userStoryLastCommentDates.set(userStoryId, null);
+      }
+    }
+
     // Collect parent Feature IDs
     const parentFeatureIds: number[] = [];
     for (const userStoryItem of userStoryItemsMap.values()) {
@@ -180,6 +199,25 @@ export async function fetchQaUserStories(iterationPath: string): Promise<FetchQa
     const bugItemsMap = await fetchWorkItemsByIds(bugIds);
     console.log('[DEBUG] Bug items fetched:', bugItemsMap.size);
 
+    // Fetch comments for each bug to compute lastCommentDate
+    const bugLastCommentDates = new Map<number, string | null>();
+    for (const bugId of bugIds) {
+      try {
+        const adoComments = await adoClient.getWorkItemComments(bugId);
+        const comments = adoComments.map(mapAdoCommentToComment);
+        if (comments.length === 0) {
+          bugLastCommentDates.set(bugId, null);
+        } else {
+          const sorted = [...comments].sort((a, b) =>
+            new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+          );
+          bugLastCommentDates.set(bugId, sorted[0].createdDate);
+        }
+      } catch {
+        bugLastCommentDates.set(bugId, null);
+      }
+    }
+
     // Map bugs to Bug type, grouped by parent User Story
     const userStoryBugsMap = new Map<number, Bug[]>();
     for (const [userStoryId, bugIdsForStory] of userStoryToBugIds) {
@@ -203,7 +241,8 @@ export async function fetchQaUserStories(iterationPath: string): Promise<FetchQa
           bugItem,
           process.env.ADO_ORG_URL ?? '',
           parentUserStoryInfo,
-          getFieldMappings()
+          getFieldMappings(),
+          bugLastCommentDates.get(bugId) ?? null
         );
         bugs.push(bug);
       }
@@ -235,7 +274,8 @@ export async function fetchQaUserStories(iterationPath: string): Promise<FetchQa
         userStoryItem,
         process.env.ADO_ORG_URL ?? '',
         parentFeature,
-        getFieldMappings()
+        getFieldMappings(),
+        userStoryLastCommentDates.get(userStoryItem.id) ?? null
       );
 
       // Add bugs for this user story

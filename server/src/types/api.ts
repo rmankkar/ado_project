@@ -111,6 +111,7 @@ export interface Bug {
     title: string;
     url: string;
   } | null;
+  lastCommentDate: string | null;
   url: string;
 }
 
@@ -228,7 +229,8 @@ export function mapWorkItemToBug(
   item: AdoWorkItem,
   orgUrl: string,
   parentUserStory: { id: number; title: string } | null,
-  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string; goLive: string }
+  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string; goLive: string },
+  lastCommentDate: string | null = null
 ): Bug {
   const fields = item.fields as AdoWorkItemFields;
   const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
@@ -263,6 +265,7 @@ export function mapWorkItemToBug(
     changedDate: changedDateValue ?? null,
     detectedBy: detectedByValue?.displayName ?? null,
     parentUserStory: parentUserStoryWithUrl,
+    lastCommentDate,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }
