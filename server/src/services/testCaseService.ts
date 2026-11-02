@@ -37,13 +37,17 @@ function buildTestCasesQuery(iterationPath: string): string {
 
 function buildAllTestCasesQuery(): string {
   const escapedAreaPath = 'Global_Data_Project\\B2B\\B2B Blackhawks'.replace(/'/g, "''");
+  // Use ADO_ITERATION_BASE_PATH from env so "All Sprints" stays scoped to the base iteration path
+  const baseIterationPath = env.adoIterationBasePath ?? '';
+  const escapedBaseIterationPath = baseIterationPath.replace(/'/g, "''");
   return `
     SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType],
            [System.AssignedTo], [System.TeamProject], [System.BoardColumn],
            [System.CreatedDate], [System.ChangedDate],
            [Microsoft.VSTS.TCM.AutomationStatus], [Microsoft.VSTS.Common.Priority]
     FROM WorkItemLinks
-    WHERE [Source].[System.areaPath] UNDER '${escapedAreaPath}'
+    WHERE [Source].[System.IterationPath] UNDER '${escapedBaseIterationPath}'
+      AND [Source].[System.areaPath] UNDER '${escapedAreaPath}'
       AND [Source].[System.WorkItemType] = '${WORK_ITEM_TYPE_USER_STORY}'
       AND [System.Links.LinkType] = '${TESTED_BY_LINK_TYPE}'
       AND [Target].[System.WorkItemType] = '${WORK_ITEM_TYPE_TEST_CASE}'
