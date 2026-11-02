@@ -1,6 +1,6 @@
 import { adoClient } from './adoClient.js';
 import { getFieldMappings } from './fieldMapping.js';
-import { mapWorkItemToFeature } from '../types/api.js';
+import { mapWorkItemToFeature, mapAdoCommentToComment } from '../types/api.js';
 import { DEFAULT_FIELDS } from '../utils/adoUrls.js';
 import type { Feature, ChildUserStory, FetchError } from '../types/api.js';
 import type { AdoWorkItem } from '../types/ado.js';
@@ -213,11 +213,31 @@ export async function fetchFeaturesFromRelease(releaseIds?: number[]): Promise<F
       if (userStoryIds.length > 0) {
         const userStoryItemsMap = await fetchWorkItemsByIds(userStoryIds);
 
+        // Fetch comments for each user story to compute lastCommentDate
+        const userStoryLastCommentDates = new Map<number, string | null>();
+        for (const userStoryId of userStoryIds) {
+          try {
+            const adoComments = await adoClient.getWorkItemComments(userStoryId);
+            const comments = adoComments.map(mapAdoCommentToComment);
+            if (comments.length === 0) {
+              userStoryLastCommentDates.set(userStoryId, null);
+            } else {
+              const sorted = [...comments].sort((a, b) =>
+                new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+              );
+              userStoryLastCommentDates.set(userStoryId, sorted[0].createdDate);
+            }
+          } catch {
+            userStoryLastCommentDates.set(userStoryId, null);
+          }
+        }
+
         // Map User Stories to their parent Features
         for (const [id, item] of userStoryItemsMap) {
           const parent = item.fields['System.Parent'] as number | undefined;
           if (parent && featureIds.includes(parent)) {
-            const story = mapWorkItemToChildStory(item, process.env.ADO_ORG_URL ?? '', { id: parent, title: '' }, getFieldMappings());
+            const lastCommentDate = userStoryLastCommentDates.get(id) ?? null;
+            const story = mapWorkItemToChildStory(item, process.env.ADO_ORG_URL ?? '', { id: parent, title: '' }, getFieldMappings(), lastCommentDate);
             const existing = childStoriesMap.get(parent) ?? [];
             existing.push(story);
             childStoriesMap.set(parent, existing);
@@ -289,7 +309,8 @@ function mapWorkItemToChildStory(
   item: AdoWorkItem,
   orgUrl: string,
   parentFeature: { id: number; title: string },
-  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string }
+  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string },
+  lastCommentDate: string | null = null
 ): ChildUserStory {
   const fields = item.fields as Record<string, unknown>;
   const assignedTo = fields['System.AssignedTo'] as { displayName?: string } | undefined;
@@ -319,6 +340,7 @@ function mapWorkItemToChildStory(
     iterationPath: iterationPath ?? null,
     storyPoints: storyPoints ?? null,
     tags: tagsValue ?? null,
+    lastCommentDate,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

@@ -1,6 +1,6 @@
 import { adoClient } from './adoClient.js';
 import { getFieldMappings } from './fieldMapping.js';
-import { mapWorkItemToChildStory } from '../types/api.js';
+import { mapWorkItemToChildStory, mapAdoCommentToComment } from '../types/api.js';
 import { DEFAULT_FIELDS } from '../utils/adoUrls.js';
 import { env } from '../config/env.js';
 import type { ChildUserStory, FetchError } from '../types/api.js';
@@ -99,6 +99,25 @@ export async function fetchChildStories(featureIds: number[]): Promise<FetchChil
     // Fetch full work item details for children
     const childItemsMap = await fetchWorkItemsByIds(childIds);
 
+    // Fetch comments for each child story to compute lastCommentDate
+    const childLastCommentDates = new Map<number, string | null>();
+    for (const childId of childIds) {
+      try {
+        const adoComments = await adoClient.getWorkItemComments(childId);
+        const comments = adoComments.map(mapAdoCommentToComment);
+        if (comments.length === 0) {
+          childLastCommentDates.set(childId, null);
+        } else {
+          const sorted = [...comments].sort((a, b) =>
+            new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+          );
+          childLastCommentDates.set(childId, sorted[0].createdDate);
+        }
+      } catch {
+        childLastCommentDates.set(childId, null);
+      }
+    }
+
     // Build parent-child associations from WIQL relations
     // A child can have multiple parents, so we create entries for each parent
     const parentChildMap = new Map<number, number[]>();
@@ -136,11 +155,13 @@ export async function fetchChildStories(featureIds: number[]): Promise<FetchChil
       // Create an entry for each parent
       for (const parentId of parentIds) {
         const parentTitle = featureTitleMap.get(parentId) ?? `Feature ${parentId}`;
+        const lastCommentDate = childLastCommentDates.get(childId) ?? null;
         const childStory = mapWorkItemToChildStory(
           childItem,
           process.env.ADO_ORG_URL ?? '',
           { id: parentId, title: parentTitle },
-          getFieldMappings()
+          getFieldMappings(),
+          lastCommentDate
         );
         childStories.push(childStory);
       }

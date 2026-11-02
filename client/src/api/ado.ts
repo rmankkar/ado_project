@@ -84,6 +84,13 @@ export const adoApi = {
     return fetchJson<FetchCommentsResponse>(`${API_BASE}/comments/${workItemId}`);
   },
 
+  async fetchCommentsBatch(ids: number[]): Promise<{ lastCommentDates: { workItemId: number; lastCommentDate: string | null }[]; errors: FetchError[] }> {
+    const idsParam = ids.join(',');
+    return fetchJson<{ lastCommentDates: { workItemId: number; lastCommentDate: string | null }[]; errors: FetchError[] }>(
+      `${API_BASE}/comments/batch?ids=${idsParam}`
+    );
+  },
+
   async fetchReleases(): Promise<FetchReleasesResponse> {
     return fetchJson<FetchReleasesResponse>(`${API_BASE}/release-features`);
   },

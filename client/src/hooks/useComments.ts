@@ -14,3 +14,21 @@ export function useFetchComments(options: UseFetchCommentsOptions = {}) {
     onError: options.onError,
   });
 }
+
+interface UseFetchCommentsBatchOptions {
+  onSuccess?: (data: { lastCommentDates: { workItemId: number; lastCommentDate: string | null }[]; errors: { id: number; message: string; type: string }[] }) => void;
+  onError?: (error: Error) => void;
+}
+
+interface LastCommentDate {
+  workItemId: number;
+  lastCommentDate: string | null;
+}
+
+export function useFetchCommentsBatch(options: UseFetchCommentsBatchOptions = {}) {
+  return useMutation<{ lastCommentDates: LastCommentDate[]; errors: { id: number; message: string; type: string }[] }, Error, number[]>({
+    mutationFn: (ids: number[]) => adoApi.fetchCommentsBatch(ids),
+    onSuccess: options.onSuccess,
+    onError: options.onError,
+  });
+}

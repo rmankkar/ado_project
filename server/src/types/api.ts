@@ -26,6 +26,7 @@ export interface ChildUserStory {
   iterationPath: string | null;
   storyPoints: number | null;
   tags: string | null;
+  lastCommentDate: string | null;
   url: string;
 }
 
@@ -169,7 +170,8 @@ export function mapWorkItemToChildStory(
   item: AdoWorkItem,
   orgUrl: string,
   parentFeature: { id: number; title: string },
-  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string }
+  fieldMappings: { boardColumn: string; deployDate: string; targetDate: string },
+  lastCommentDate: string | null = null
 ): ChildUserStory {
   const fields = item.fields as AdoWorkItemFields;
   const assignedTo = fields['System.AssignedTo'] as AdoIdentityRef | undefined;
@@ -200,6 +202,7 @@ export function mapWorkItemToChildStory(
     iterationPath: iterationPath ?? null,
     storyPoints: storyPoints ?? null,
     tags: tagsValue ?? null,
+    lastCommentDate,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

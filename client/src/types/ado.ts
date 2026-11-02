@@ -44,6 +44,7 @@ export interface ChildUserStory {
   iterationPath: string | null;
   storyPoints: number | null;
   tags: string | null;
+  lastCommentDate: string | null;
   url: string;
   bugs?: Bug[];
 }

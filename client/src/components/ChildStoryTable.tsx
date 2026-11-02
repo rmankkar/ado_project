@@ -25,6 +25,7 @@ interface FilterState {
   searchText: string;
   iterationPath: string;
   tags: string;
+  lastCommentFilter: boolean;
 }
 
 export function ChildStoryTable({
@@ -46,6 +47,7 @@ export function ChildStoryTable({
     searchText: '',
     iterationPath: '',
     tags: '',
+    lastCommentFilter: false,
   });
   const [selectedItem, setSelectedItem] = useState<{ id: number; title: string; type: 'us' } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -131,6 +133,16 @@ export function ChildStoryTable({
           .map(t => t.trim())
           .filter(t => t.length > 0 && !t.toLowerCase().includes('spillover'))
           .some(t => t.toLowerCase().includes(tagLower));
+      });
+    }
+    // Apply "last comment > 4 days ago" filter (includes stories with no comments)
+    if (filters.lastCommentFilter) {
+      const fourDaysAgo = Date.now() - 4 * 24 * 60 * 60 * 1000;
+      result = result.filter(s => {
+        const lastCommentDate = s.lastCommentDate;
+        // Include stories with no comments, or whose last comment is older than 4 days
+        if (!lastCommentDate) return true;
+        return new Date(lastCommentDate).getTime() < fourDaysAgo;
       });
     }
     // Apply search text filter (case-insensitive search on title or ID)
@@ -249,10 +261,10 @@ export function ChildStoryTable({
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true, searchText: '', iterationPath: '', tags: '' });
+    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true, searchText: '', iterationPath: '', tags: '', lastCommentFilter: false });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved || filters.searchText || filters.iterationPath || filters.tags;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved || filters.searchText || filters.iterationPath || filters.tags || filters.lastCommentFilter;
 
   if (isLoading) {
     return (
@@ -439,6 +451,18 @@ export function ChildStoryTable({
               placeholder="Filter by tag..."
               className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-48"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="lastCommentFilter"
+              checked={filters.lastCommentFilter}
+              onChange={(e) => handleFilterChange('lastCommentFilter', e.target.checked)}
+              className="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+            />
+            <label htmlFor="lastCommentFilter" className="text-sm text-neutral-700">
+              Last comment &gt; 4 days ago (includes no comments)
+            </label>
           </div>
           {hasActiveFilters && (
             <button
