@@ -51,6 +51,7 @@ function buildAllTestCasesQuery(): string {
       AND [Source].[System.WorkItemType] = '${WORK_ITEM_TYPE_USER_STORY}'
       AND [System.Links.LinkType] = '${TESTED_BY_LINK_TYPE}'
       AND [Target].[System.WorkItemType] = '${WORK_ITEM_TYPE_TEST_CASE}'
+      AND [Source].[System.State] NOT IN ('Closed', 'Removed')
     ORDER BY [Target].[System.Id]
   `;
 }
