@@ -180,52 +180,50 @@ export function FeatureInput({
             <label htmlFor="release-select" className="block text-sm font-medium text-neutral-700 mb-2">
               Select Release(s) (with "blackhawks" tag, not Closed/Completed/Rejected)
             </label>
-            <div className="flex flex-wrap gap-3 items-end">
-              <div className="flex-1 min-w-[200px]">
-                <select
-                  id="release-select"
-                  className="input"
-                  multiple
-                  value={selectedReleaseIds.map(String)}
-                  onChange={handleReleaseSelectionChange}
-                  disabled={isLoadingReleases || isFetchingReleaseFeatures || releases.length === 0}
-                >
-                  {releases.length === 0 ? (
-                    <option value="">-- Click "Load Releases" to fetch available releases --</option>
-                  ) : (
-                    <>
-                      <option value="">-- Select one or more Releases --</option>
-                      {releases.map(release => (
-                        <option key={release.id} value={release.id}>
-                          {release.title} ({release.state})
-                        </option>
-                      ))}
-                    </>
-                  )}
-                </select>
-                <p className="mt-1 text-sm text-neutral-500">
-                  Hold Ctrl/Cmd to select multiple releases. Features and User Stories will be fetched for selected releases.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={onLoadReleases}
-                className="btn-secondary whitespace-nowrap"
-                disabled={isLoadingReleases}
+            <div className="flex-1 min-w-[200px]">
+              <select
+                id="release-select"
+                className="input"
+                multiple
+                value={selectedReleaseIds.map(String)}
+                onChange={handleReleaseSelectionChange}
+                disabled={isLoadingReleases || isFetchingReleaseFeatures || releases.length === 0}
               >
-                {isLoadingReleases ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-neutral-600" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Loading...
-                  </>
+                {releases.length === 0 ? (
+                  <option value="">-- Click "Load Releases" to fetch available releases --</option>
                 ) : (
-                  'Load Releases'
+                  <>
+                    <option value="">-- Select one or more Releases --</option>
+                    {releases.map(release => (
+                      <option key={release.id} value={release.id}>
+                        {release.title} ({release.state})
+                      </option>
+                    ))}
+                  </>
                 )}
-              </button>
+              </select>
+              <p className="mt-1 text-sm text-neutral-500">
+                Hold Ctrl/Cmd to select multiple releases. Features and User Stories will be fetched for selected releases.
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={onLoadReleases}
+              className="btn-secondary whitespace-nowrap"
+              disabled={isLoadingReleases}
+            >
+              {isLoadingReleases ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-neutral-600" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Loading...
+                </>
+              ) : (
+                'Load Releases'
+              )}
+            </button>
           </div>
 
           <div className="flex flex-wrap gap-3">
