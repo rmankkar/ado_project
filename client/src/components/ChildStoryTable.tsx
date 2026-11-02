@@ -24,6 +24,7 @@ interface FilterState {
   hideRemoved: boolean;
   searchText: string;
   iterationPath: string;
+  tags: string;
 }
 
 export function ChildStoryTable({
@@ -44,6 +45,7 @@ export function ChildStoryTable({
     hideRemoved: true,
     searchText: '',
     iterationPath: '',
+    tags: '',
   });
   const [selectedItem, setSelectedItem] = useState<{ id: number; title: string; type: 'us' } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -118,6 +120,18 @@ export function ChildStoryTable({
     }
     if (filters.iterationPath) {
       result = result.filter(s => s.iterationPath === filters.iterationPath);
+    }
+    // Apply tags filter (case-insensitive, excludes "spillover" tags)
+    if (filters.tags) {
+      const tagLower = filters.tags.toLowerCase();
+      result = result.filter(s => {
+        if (!s.tags) return false;
+        return s.tags
+          .split(';')
+          .map(t => t.trim())
+          .filter(t => t.length > 0 && !t.toLowerCase().includes('spillover'))
+          .some(t => t.toLowerCase().includes(tagLower));
+      });
     }
     // Apply search text filter (case-insensitive search on title or ID)
     if (filters.searchText) {
@@ -204,6 +218,7 @@ export function ChildStoryTable({
       { header: 'Target Date', key: 'targetDate', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
       { header: 'Iteration Path', key: 'iterationPath', width: 30 },
       { header: 'Story Points', key: 'storyPoints', width: 15 },
+      { header: 'Tags', key: 'tags', width: 30, render: (v: string | null | undefined) => v ? v.split(';').map(t => t.trim()).filter(t => t.length > 0 && !t.toLowerCase().includes('spillover')).join(', ') : '' },
       { header: 'Parent Feature', key: 'parentFeature', width: 30, render: (v: { id: number; title: string } | null | undefined) => v ? `${v.id} - ${v.title}` : '' },
     ];
 
@@ -217,6 +232,7 @@ export function ChildStoryTable({
       targetDate: s.targetDate,
       iterationPath: s.iterationPath ?? '',
       storyPoints: s.storyPoints ?? '',
+      tags: s.tags ?? '',
       parentFeature: s.parentFeature,
     }));
 
@@ -233,10 +249,10 @@ export function ChildStoryTable({
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true, searchText: '', iterationPath: '' });
+    setFilters({ status: '', assignedTo: '', boardColumn: '', hideRemoved: true, searchText: '', iterationPath: '', tags: '' });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved || filters.searchText || filters.iterationPath;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.boardColumn || filters.hideRemoved || filters.searchText || filters.iterationPath || filters.tags;
 
   if (isLoading) {
     return (
@@ -253,6 +269,7 @@ export function ChildStoryTable({
               <th>Target Date</th>
               <th>Iteration Path</th>
               <th>Story Points</th>
+              <th>Tags</th>
               <th>Parent Feature</th>
               <th>Comments</th>
             </tr>
@@ -269,6 +286,7 @@ export function ChildStoryTable({
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-24 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-32 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-12 animate-pulse" /></td>
               </tr>
@@ -412,6 +430,16 @@ export function ChildStoryTable({
             />
             <label htmlFor="hideRemoved" className="text-sm text-neutral-700">Hide Removed</label>
           </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Tags:</label>
+            <input
+              type="text"
+              value={filters.tags}
+              onChange={(e) => handleFilterChange('tags', e.target.value)}
+              placeholder="Filter by tag..."
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-48"
+            />
+          </div>
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
@@ -481,6 +509,7 @@ export function ChildStoryTable({
                   {getSortIcon('storyPoints') && <span className="text-neutral-400">{getSortIcon('storyPoints')}</span>}
                 </div>
               </th>
+              <th scope="col">Tags</th>
               <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('parentFeature')}>
                 <div className="flex items-center gap-1">
                   Parent Feature
@@ -493,7 +522,7 @@ export function ChildStoryTable({
           <tbody>
             {filteredAndSortedStories.length === 0 && hasAttemptedFetch ? (
               <tr>
-                <td colSpan={11} className="text-center py-8 text-neutral-500">
+                <td colSpan={12} className="text-center py-8 text-neutral-500">
                   No child User Stories found for the selected Features. This could mean the Features have no children, or the children are not of type 'User Story'.
                 </td>
               </tr>
@@ -535,6 +564,15 @@ export function ChildStoryTable({
                 </td>
                 <td className="text-neutral-600 text-center font-mono">
                   {story.storyPoints !== null && story.storyPoints !== undefined ? story.storyPoints : '—'}
+                </td>
+                <td className="text-neutral-600 text-sm">
+                  {story.tags
+                    ? story.tags
+                        .split(';')
+                        .map(t => t.trim())
+                        .filter(t => t.length > 0 && !t.toLowerCase().includes('spillover'))
+                        .join(', ')
+                    : '—'}
                 </td>
                 <td className="font-mono text-sm text-neutral-600">
                   <a

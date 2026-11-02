@@ -95,7 +95,7 @@ function buildUserStoriesQuery(featureIds: number[]): string {
   return `
     SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType], [System.AssignedTo],
            [System.TeamProject], [System.CreatedDate], [System.ChangedDate], [System.Parent],
-           [System.BoardColumn], [Custom.DeployDate], [Microsoft.VSTS.Scheduling.TargetDate], [System.IterationPath], [Microsoft.VSTS.Scheduling.StoryPoints]
+           [System.BoardColumn], [Custom.DeployDate], [Microsoft.VSTS.Scheduling.TargetDate], [System.IterationPath], [Microsoft.VSTS.Scheduling.StoryPoints], [System.Tags]
     FROM WorkItems
     WHERE [System.WorkItemType] = 'User Story'
       AND [System.Parent] IN (${idsList})
@@ -300,6 +300,7 @@ function mapWorkItemToChildStory(
   const boardColumnValue = fields[fieldMappings.boardColumn] as string | undefined;
   const deployDateValue = fields[fieldMappings.deployDate] as string | undefined;
   const targetDateValue = fields[fieldMappings.targetDate] as string | undefined;
+  const tagsValue = fields['System.Tags'] as string | undefined;
 
   const parentFeatureWithUrl = {
     ...parentFeature,
@@ -317,6 +318,7 @@ function mapWorkItemToChildStory(
     parentFeature: parentFeatureWithUrl,
     iterationPath: iterationPath ?? null,
     storyPoints: storyPoints ?? null,
+    tags: tagsValue ?? null,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }

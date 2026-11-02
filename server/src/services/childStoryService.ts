@@ -18,7 +18,7 @@ function buildChildQuery(featureIds: number[]): string {
   const linkType = env.adoLinkType;
   return `
     SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType], [System.AssignedTo],
-           [System.TeamProject], [System.BoardColumn], [Custom.DeployDate], [Microsoft.VSTS.Scheduling.TargetDate]
+           [System.TeamProject], [System.BoardColumn], [Custom.DeployDate], [Microsoft.VSTS.Scheduling.TargetDate], [System.Tags]
     FROM WorkItemLinks
     WHERE [Source].[System.Id] IN (${ids})
       AND [System.Links.LinkType] = '${linkType}'
@@ -47,6 +47,7 @@ async function fetchWorkItemsByIds(ids: number[]): Promise<Map<number, AdoWorkIt
     getFieldMappings().boardColumn,
     getFieldMappings().deployDate,
     getFieldMappings().targetDate,
+    'System.Tags',
   ];
 
   const items = await adoClient.getWorkItems(ids, fields);

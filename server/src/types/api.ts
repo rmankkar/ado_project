@@ -25,6 +25,7 @@ export interface ChildUserStory {
   };
   iterationPath: string | null;
   storyPoints: number | null;
+  tags: string | null;
   url: string;
 }
 
@@ -179,6 +180,7 @@ export function mapWorkItemToChildStory(
   const boardColumnValue = fields[fieldMappings.boardColumn] as string | undefined;
   const deployDateValue = fields[fieldMappings.deployDate] as string | undefined;
   const targetDateValue = fields[fieldMappings.targetDate] as string | undefined;
+  const tagsValue = fields['System.Tags'] as string | undefined;
 
   // Construct parent Feature URL
   const parentFeatureWithUrl = {
@@ -197,6 +199,7 @@ export function mapWorkItemToChildStory(
     parentFeature: parentFeatureWithUrl,
     iterationPath: iterationPath ?? null,
     storyPoints: storyPoints ?? null,
+    tags: tagsValue ?? null,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
   };
 }
