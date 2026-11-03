@@ -68,7 +68,7 @@ ADO_FIELD_DEPLOY_DATE=Custom.DeployDate
 ADO_FIELD_TARGET_DATE=Microsoft.VSTS.Scheduling.TargetDate
 
 # Base Iteration Path used for "All Sprints" in Test Case Review tab
-ADO_ITERATION_BASE_PATH=Global_Data_Project\SE\PI22
+ADO_ITERATION_BASE_PATH=YourProjectName\IterationName\Sub-IterationName
 ```
 
 ### Finding Custom Field Reference Names
