@@ -10,7 +10,11 @@ A web application for retrieving Azure DevOps Features and their child User Stor
   - **Date Highlighting**: Deploy Date and Target Date highlighted in red if past due
   - **Date Sorting**: Proper chronological sorting for date columns
   - **Feature Links**: Parent Feature ID linked to ADO work item
+  - **Tags Column**: Shows tags on each User Story (tags containing "spillover" are excluded from display only — no ADO data filtering)
+  - **Tags Search**: Text input filter to search User Stories by tag
+  - **Last Comment Filter**: Checkbox to show User Stories where the last comment was added more than 4 days ago (includes items with no comments)
 - **Test Case Review**: Search Test Cases in selected iteration with comprehensive filtering
+  - **All Sprints**: Option to fetch Test Cases from all sprints (scoped to `ADO_ITERATION_BASE_PATH` from `.env`)
   - Filter by Status, Assigned To, Automation Status, Priority, Complexity
   - Parent User Story links (comma-separated for multiple parents)
   - Tags column showing all tags on Test Cases
@@ -62,6 +66,9 @@ QA_TEAM_EMAILS=qa1@example.com,qa2@example.com
 ADO_FIELD_BOARD_COLUMN=System.BoardColumn
 ADO_FIELD_DEPLOY_DATE=Custom.DeployDate
 ADO_FIELD_TARGET_DATE=Microsoft.VSTS.Scheduling.TargetDate
+
+# Base Iteration Path used for "All Sprints" in Test Case Review tab
+ADO_ITERATION_BASE_PATH=Global_Data_Project\SE\PI22
 ```
 
 ### Finding Custom Field Reference Names
@@ -103,7 +110,7 @@ Open http://localhost:5173 in your browser.
 
 ### Test Case Review Tab
 1. **Load Iterations**: Click "Load Iterations" to fetch available iterations
-2. **Select Iteration**: Choose an iteration from the dropdown
+2. **Select Iteration**: Choose an iteration from the dropdown, or select "All Sprints" to fetch Test Cases across all sprints (scoped to `ADO_ITERATION_BASE_PATH` in `.env`)
 3. **Get Test Cases**: Click "Get Test Cases" to retrieve Test Cases linked to User Stories in that iteration
 4. **Filter & Sort**: Use filter dropdowns (Status, Assigned To, Automation Status, Priority, Complexity) and sort by clicking column headers
 5. **View Parent US**: Click Parent User Story links to open in ADO (shows comma-separated links for multiple parents)
