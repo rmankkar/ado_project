@@ -22,6 +22,7 @@ interface FilterState {
   goLive: string;
   severity: string;
   searchText: string;
+  tags: string;
   lastCommentFilter: boolean;
 }
 
@@ -40,6 +41,7 @@ export function BugTable({
     goLive: '',
     severity: '',
     searchText: '',
+    tags: '',
     lastCommentFilter: false,
   });
 
@@ -121,6 +123,18 @@ export function BugTable({
       const searchLower = filters.searchText.toLowerCase();
       result = result.filter(s => s.title.toLowerCase().includes(searchLower) || s.id.toString().includes(searchLower));
     }
+    // Apply tags filter (case-insensitive search on tags)
+    if (filters.tags) {
+      const tagLower = filters.tags.toLowerCase();
+      result = result.filter(s => {
+        if (!s.tags) return false;
+        return s.tags
+          .split(';')
+          .map(t => t.trim())
+          .filter(t => t.length > 0)
+          .some(t => t.toLowerCase().includes(tagLower));
+      });
+    }
     // Apply "last comment > 4 days ago" filter (includes bugs with no comments)
     if (filters.lastCommentFilter) {
       const fourDaysAgo = Date.now() - 4 * 24 * 60 * 60 * 1000;
@@ -166,6 +180,10 @@ export function BugTable({
           aVal = (a.severity ?? '').toLowerCase();
           bVal = (b.severity ?? '').toLowerCase();
           break;
+        case 'tags':
+          aVal = (a.tags ?? '').toLowerCase();
+          bVal = (b.tags ?? '').toLowerCase();
+          break;
         case 'priority':
           aVal = a.priority ?? 0;
           bVal = b.priority ?? 0;
@@ -206,6 +224,7 @@ export function BugTable({
       { header: 'Status', key: 'status', width: 18 },
       { header: 'Severity', key: 'severity', width: 15 },
       { header: 'Priority', key: 'priority', width: 10 },
+      { header: 'Tags', key: 'tags', width: 30, render: (v: string | null | undefined) => v ? v.split(';').map(t => t.trim()).filter(t => t.length > 0).join(', ') : '' },
       { header: 'Assigned To', key: 'assignedTo', width: 25 },
       { header: 'Detected By', key: 'detectedBy', width: 25 },
       { header: 'Go Live', key: 'goLive', width: 15, render: (v: string | null | undefined) => formatDateForExport(v) },
@@ -219,6 +238,7 @@ export function BugTable({
       status: b.status,
       severity: b.severity ?? '',
       priority: b.priority ?? '',
+      tags: b.tags ?? '',
       assignedTo: b.assignedTo ?? '',
       detectedBy: b.detectedBy ?? '',
       goLive: b.goLive,
@@ -239,10 +259,10 @@ export function BugTable({
   };
 
   const clearFilters = () => {
-    setFilters({ status: '', assignedTo: '', detectedBy: '', goLive: '', severity: '', searchText: '', lastCommentFilter: false });
+    setFilters({ status: '', assignedTo: '', detectedBy: '', goLive: '', severity: '', searchText: '', tags: '', lastCommentFilter: false });
   };
 
-  const hasActiveFilters = filters.status || filters.assignedTo || filters.detectedBy || filters.goLive || filters.severity || filters.searchText || filters.lastCommentFilter;
+  const hasActiveFilters = filters.status || filters.assignedTo || filters.detectedBy || filters.goLive || filters.severity || filters.searchText || filters.tags || filters.lastCommentFilter;
 
   if (isLoading) {
     return (
@@ -260,6 +280,7 @@ export function BugTable({
               <th>Go Live</th>
               <th>Created</th>
               <th>Parent User Story</th>
+              <th>Tags</th>
               <th>Comments</th>
             </tr>
           </thead>
@@ -276,6 +297,7 @@ export function BugTable({
                 <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-28 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-36 animate-pulse" /></td>
+                <td><div className="h-4 bg-neutral-200 rounded w-32 animate-pulse" /></td>
                 <td><div className="h-4 bg-neutral-200 rounded w-12 animate-pulse" /></td>
               </tr>
             ))}
@@ -393,6 +415,16 @@ export function BugTable({
             </select>
           </div>
           <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-700">Tags:</label>
+            <input
+              type="text"
+              value={filters.tags}
+              onChange={(e) => handleFilterChange('tags', e.target.value)}
+              placeholder="Filter by tag..."
+              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-primary-500 w-48"
+            />
+          </div>
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="lastCommentFilter"
@@ -479,6 +511,12 @@ export function BugTable({
                   {getSortIcon('parentUserStory') && <span className="text-neutral-400">{getSortIcon('parentUserStory')}</span>}
                 </div>
               </th>
+              <th scope="col" className="cursor-pointer select-none" onClick={() => handleSort('tags')}>
+                <div className="flex items-center gap-1">
+                  Tags
+                  {getSortIcon('tags') && <span className="text-neutral-400">{getSortIcon('tags')}</span>}
+                </div>
+              </th>
               <th scope="col">
                 <div className="flex items-center gap-1">
                   Comments
@@ -489,7 +527,7 @@ export function BugTable({
           <tbody>
             {filteredAndSortedBugs.length === 0 ? (
               <tr>
-                <td colSpan={11} className="text-center py-8 text-neutral-500">
+                <td colSpan={12} className="text-center py-8 text-neutral-500">
                   No open bugs found for the selected iteration. This could mean there are no bugs linked to User Stories in this iteration.
                 </td>
               </tr>
@@ -551,6 +589,15 @@ export function BugTable({
                   ) : (
                     <span>—</span>
                   )}
+                </td>
+                <td className="text-neutral-600 text-sm">
+                  {bug.tags
+                    ? bug.tags
+                        .split(';')
+                        .map(t => t.trim())
+                        .filter(t => t.length > 0)
+                        .join(', ')
+                    : '—'}
                 </td>
                 <td className="text-center">
                   <button

@@ -58,6 +58,7 @@ async function fetchWorkItemsByIds(ids: number[]): Promise<Map<number, AdoWorkIt
     'System.ChangedDate',
     'System.Parent',
     'Custom.DetectedByPerson',
+    'System.Tags',
   ];
 
   const items = await adoClient.getWorkItems(ids, fields);

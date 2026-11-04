@@ -23,7 +23,7 @@ A web application for retrieving Azure DevOps Features and their child User Stor
 - **QA Assignments**: Find User Stories assigned to QA team members or in "In Progress(QA)" board column
   - Iteration selector with date range display
   - Filter by Status, Assigned To, Board Column, Parent Feature, and search by Title
-  - Expandable child Bug details (ID, Title, Status, Assigned To, Board Column)
+  - Expandable child Bug details (ID, Title, Status, Assigned To, Board Column, Tags)
   - Insights: Total QA User Stories, Unique Parent Features, Open Child Bugs
   - Visual charts: Child Bug Status Distribution, User Stories by Board Column, User Stories by Assignee
 - **Visual Reports**: Pie charts for status distributions across all tabs

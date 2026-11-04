@@ -25,6 +25,7 @@ export interface Bug {
     title: string;
     url: string;
   } | null;
+  tags: string | null;
   lastCommentDate: string | null;
   url: string;
 }
@@ -78,6 +79,7 @@ export interface Bug {
     title: string;
     url: string;
   } | null;
+  tags: string | null;
   lastCommentDate: string | null;
   url: string;
 }

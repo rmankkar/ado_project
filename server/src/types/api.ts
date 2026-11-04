@@ -111,6 +111,7 @@ export interface Bug {
     title: string;
     url: string;
   } | null;
+  tags: string | null;
   lastCommentDate: string | null;
   url: string;
 }
@@ -243,6 +244,7 @@ export function mapWorkItemToBug(
   const createdDateValue = fields['System.CreatedDate'] as string | undefined;
   const changedDateValue = fields['System.ChangedDate'] as string | undefined;
   const detectedByValue = fields['Custom.DetectedByPerson'] as AdoIdentityRef | undefined;
+  const tagsValue = fields['System.Tags'] as string | undefined;
 
   // Construct parent User Story URL if parent exists
   const parentUserStoryWithUrl = parentUserStory
@@ -264,6 +266,7 @@ export function mapWorkItemToBug(
     createdDate: createdDateValue ?? null,
     changedDate: changedDateValue ?? null,
     detectedBy: detectedByValue?.displayName ?? null,
+    tags: tagsValue ?? null,
     parentUserStory: parentUserStoryWithUrl,
     lastCommentDate,
     url: `${orgUrl}/${project}/_workitems/edit/${item.id}`,
